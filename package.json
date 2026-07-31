@@ -1,0 +1,16 @@
+{
+  "name": "virtual-search-workspace",
+  "private": true,
+  "packageManager": "pnpm@10.32.1",
+  "scripts": {
+    "build": "pnpm --filter virtual-search build && pnpm --filter @virtual-search/demo build",
+    "benchmark": "pnpm --filter virtual-search build && node scripts/benchmark.mjs",
+    "dev": "pnpm --filter @virtual-search/demo dev",
+    "preview": "pnpm --filter @virtual-search/demo preview",
+    "test": "pnpm --filter virtual-search test",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "types": ["vite/client"],
+    "paths": {
+      "virtual-search": ["../../packages/virtual-search/src/index.ts"],
+      "virtual-search/react": ["../../packages/virtual-search/src/react/index.ts"],
+      "virtual-search/tanstack": ["../../packages/virtual-search/src/tanstack/index.ts"],
+      "virtual-search/worker": ["../../packages/virtual-search/src/worker/index.ts"],
+      "virtual-search/worker/runtime": ["../../packages/virtual-search/src/worker/runtime.ts"]
+    }
+  },
+  "include": ["src", "vite.config.ts", "playwright.config.ts", "tests"]
+}
