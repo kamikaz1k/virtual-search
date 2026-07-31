@@ -516,11 +516,36 @@ footer {
   }
 
   .command-search {
-    top: 10px;
-    right: 10px;
-    left: 10px;
-    width: auto;
+    top: calc(
+      var(--visual-viewport-top, 0px)
+      + max(10px, env(safe-area-inset-top))
+    );
+    right: auto;
+    left: calc(
+      var(--visual-viewport-left, 0px)
+      + max(10px, env(safe-area-inset-left))
+    );
+    width: calc(
+      var(--visual-viewport-width, 100vw)
+      - max(
+        20px,
+        calc(env(safe-area-inset-left) + env(safe-area-inset-right))
+      )
+    );
+    max-height: calc(
+      var(--visual-viewport-height, 100dvh)
+      - max(
+        20px,
+        calc(env(safe-area-inset-top) + env(safe-area-inset-bottom))
+      )
+    );
+    overflow: auto;
+    overscroll-behavior: contain;
     box-shadow: 5px 5px 0 var(--ink);
+  }
+
+  .command-search-heading {
+    min-height: 44px;
   }
 
   .command-search-entry {

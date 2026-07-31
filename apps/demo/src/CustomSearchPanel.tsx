@@ -15,7 +15,44 @@ function resultLabel(
 
 export function CustomSearchPanel() {
   const search = useVirtualSearch();
+  const panelRef = useRef<HTMLFormElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!search.isOpen) return;
+
+    const panel = panelRef.current;
+    const viewport = window.visualViewport;
+    if (!panel || !viewport) return;
+
+    const syncVisualViewport = () => {
+      panel.style.setProperty(
+        "--visual-viewport-top",
+        `${viewport.offsetTop}px`,
+      );
+      panel.style.setProperty(
+        "--visual-viewport-left",
+        `${viewport.offsetLeft}px`,
+      );
+      panel.style.setProperty(
+        "--visual-viewport-width",
+        `${viewport.width}px`,
+      );
+      panel.style.setProperty(
+        "--visual-viewport-height",
+        `${viewport.height}px`,
+      );
+    };
+
+    syncVisualViewport();
+    viewport.addEventListener("resize", syncVisualViewport);
+    viewport.addEventListener("scroll", syncVisualViewport);
+
+    return () => {
+      viewport.removeEventListener("resize", syncVisualViewport);
+      viewport.removeEventListener("scroll", syncVisualViewport);
+    };
+  }, [search.isOpen]);
 
   useEffect(() => {
     if (!search.isOpen) return;
@@ -41,6 +78,7 @@ export function CustomSearchPanel() {
 
   return (
     <form
+      ref={panelRef}
       role="search"
       className="command-search"
       data-virtual-search-panel=""
