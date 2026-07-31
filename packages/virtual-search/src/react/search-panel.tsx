@@ -24,9 +24,11 @@ export function SearchPanel({
 
   const resultLabel = search.query.length === 0
     ? "Enter a search term"
-    : search.matches.length === 0
-      ? "No results"
-      : `${search.activeIndex + 1} of ${search.matches.length}`;
+    : search.status === "searching"
+      ? "Searching…"
+      : search.matches.length === 0
+        ? "No results"
+        : `${search.activeIndex + 1} of ${search.matches.length}`;
 
   const onSubmit = (event: FormEvent) => {
     event.preventDefault();
@@ -41,6 +43,7 @@ export function SearchPanel({
       data-search-status={search.status}
       data-active-region={search.matches[search.activeIndex]?.regionId}
       data-active-unit={search.matches[search.activeIndex]?.unitKey}
+      aria-busy={search.status === "searching"}
       onSubmit={onSubmit}
     >
       <label>
