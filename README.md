@@ -125,6 +125,33 @@ function CustomSearch() {
 Keep `data-virtual-search-panel` on the custom panel and use a
 `<input type="search">` so `useFindShortcut()` can focus it after Cmd/Ctrl+F.
 
+## Native-like UX details
+
+Several small behaviors make the experience feel much closer to browser Find.
+They are easy to miss in a quick demo, but are deliberate parts of the
+implementation:
+
+| Detail | Why it matters | Responsibility |
+| --- | --- | --- |
+| The first result is the first occurrence in document order | Opening a new query starts where users expect native Find to start, even when that occurrence is inside an unmounted row | Core |
+| Next and previous wrap across page boundaries | Navigation continues naturally from the last match to the first and back again | Core |
+| Virtual rows mount before range lookup and scrolling | Search can reveal exact text in records that did not exist in the DOM when the query ran | Core and virtualizer adapter |
+| Navigation waits for rendering and measurement to settle | Dynamic row sizing does not leave the active highlight or scroll position slightly displaced | React region binding |
+| Superseded searches and navigation are cancelled | Fast typing cannot allow stale worker results to move selection or scroll the page later | Core and worker executor |
+| Escape closes search and restores the previously focused element | Keyboard users return to the control they were using before opening Find | Core and React shortcut binding |
+| Result counts use an ARIA live region and searching uses `aria-busy` | Assistive technology receives the same progress and `X of Y` feedback as sighted users | Search UI |
+| CSS Custom Highlight ranges avoid inserting `<mark>` elements | Highlighting does not mutate or fight framework-owned DOM | Core highlighter |
+| The mobile panel follows the browser's visual viewport | When the software keyboard opens or result navigation pans the page, the search controls remain visible instead of being stranded outside the usable viewport | Demo custom UI |
+| Safe-area insets and `viewport-fit=cover` are respected | The panel avoids notches and rounded screen edges without disabling pinch zoom | Demo custom UI |
+| Mobile input text remains at least 16px and touch controls are enlarged | Focusing search does not trigger iOS text-field zoom, and navigation remains comfortable by touch | Demo custom UI |
+| Extremely short viewports make the panel internally scrollable | Landscape phones and keyboard-constrained layouts keep every search action reachable | Demo custom UI |
+
+The mobile behavior lives in the
+[custom demo panel](apps/demo/src/CustomSearchPanel.tsx) and its
+[responsive styles](apps/demo/src/styles.css), because applications own the
+headless search UI. The library intentionally does not disable
+`user-scalable` or set a restrictive maximum zoom.
+
 ## Registering a TanStack Virtual list
 
 ```tsx
