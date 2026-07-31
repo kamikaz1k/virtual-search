@@ -78,6 +78,53 @@ describe("createVirtualSearch", () => {
     expect(search.getState().activeIndex).toBe(0);
   });
 
+  it("can restart at the first match when search reopens", async () => {
+    document.body.innerHTML = `
+      <main id="root">
+        <p>Needle one</p>
+        <p>Needle two</p>
+        <p>Needle three</p>
+      </main>
+    `;
+    const root = document.querySelector("#root")!;
+    const search = createVirtualSearch({
+      root,
+      resetActiveMatchOnOpen: true,
+    });
+
+    await search.setQuery("needle");
+    await search.goTo(2);
+    expect(search.getState().activeIndex).toBe(2);
+
+    search.close();
+    search.open();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(search.getState().query).toBe("needle");
+    expect(search.getState().activeIndex).toBe(0);
+  });
+
+  it("preserves the active match on reopen by default", async () => {
+    document.body.innerHTML = `
+      <main id="root">
+        <p>Needle one</p>
+        <p>Needle two</p>
+      </main>
+    `;
+    const root = document.querySelector("#root")!;
+    const search = createVirtualSearch({ root });
+
+    await search.setQuery("needle");
+    await search.goTo(1);
+    search.close();
+    search.open();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(search.getState().activeIndex).toBe(1);
+  });
+
   it("reveals an unmounted virtual item before locating it", async () => {
     document.body.innerHTML = `<main><div id="list"></div></main>`;
     const root = document.querySelector("main")!;

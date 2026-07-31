@@ -82,6 +82,7 @@ export type SearchStateListener = (state: SearchState) => void;
 export interface VirtualSearchOptions {
   root: Element | (() => Element | null);
   executor?: SearchExecutor;
+  resetActiveMatchOnOpen?: boolean;
   searchOptions?: SearchOptions;
   scrollMargin?: number;
 }

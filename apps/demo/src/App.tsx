@@ -55,7 +55,11 @@ export function App() {
   );
 
   return (
-    <VirtualSearchProvider rootRef={rootRef} executor={searchExecutor}>
+    <VirtualSearchProvider
+      rootRef={rootRef}
+      executor={searchExecutor}
+      resetActiveMatchOnOpen
+    >
       <SearchControls />
 
       <main ref={rootRef}>
