@@ -78,15 +78,24 @@ The demo uses the headless hook to provide its own input, result counter, and
 navigation controls. A minimal custom panel looks like this:
 
 ```tsx
-import { useVirtualSearch } from "virtual-search/react";
+import {
+  useSearchPanelViewport,
+  useVirtualSearch,
+} from "virtual-search/react";
 
 function CustomSearch() {
   const search = useVirtualSearch();
+  const panelRef = useRef<HTMLFormElement>(null);
+  useSearchPanelViewport(panelRef, {
+    enabled: search.isOpen,
+    padding: 10,
+  });
 
   if (!search.isOpen) return null;
 
   return (
     <form
+      ref={panelRef}
       role="search"
       data-virtual-search-panel=""
       aria-busy={search.status === "searching"}
@@ -124,6 +133,20 @@ function CustomSearch() {
 
 Keep `data-virtual-search-panel` on the custom panel and use a
 `<input type="search">` so `useFindShortcut()` can focus it after Cmd/Ctrl+F.
+`useSearchPanelViewport()` is optional for custom panels; it keeps fixed search
+UI inside the browser's visual viewport while the software keyboard is open.
+The built-in `SearchPanel` enables this behavior automatically. Pass
+`keepInVisualViewport={false}` only when an application provides its own
+viewport management.
+
+The hook also publishes
+`--virtual-search-viewport-top`,
+`--virtual-search-viewport-left`,
+`--virtual-search-viewport-width`, and
+`--virtual-search-viewport-height` on the panel. Custom fixed-position styles
+can use these values with safe-area insets; the hook still applies a final
+overflow and position guard when the panel would otherwise leave the visible
+viewport.
 
 ## Native-like UX details
 
@@ -141,16 +164,16 @@ implementation:
 | Escape closes search and restores the previously focused element | Keyboard users return to the control they were using before opening Find | Core and React shortcut binding |
 | Result counts use an ARIA live region and searching uses `aria-busy` | Assistive technology receives the same progress and `X of Y` feedback as sighted users | Search UI |
 | CSS Custom Highlight ranges avoid inserting `<mark>` elements | Highlighting does not mutate or fight framework-owned DOM | Core highlighter |
-| The mobile panel follows the browser's visual viewport | When the software keyboard opens or result navigation pans the page, the search controls remain visible instead of being stranded outside the usable viewport | Demo custom UI |
+| The search panel follows the browser's visual viewport | When the software keyboard opens or result navigation pans the page, fixed search controls remain visible instead of being stranded outside the usable viewport | React `SearchPanel` and `useSearchPanelViewport()` |
 | Safe-area insets and `viewport-fit=cover` are respected | The panel avoids notches and rounded screen edges without disabling pinch zoom | Demo custom UI |
 | Mobile input text remains at least 16px and touch controls are enlarged | Focusing search does not trigger iOS text-field zoom, and navigation remains comfortable by touch | Demo custom UI |
 | Extremely short viewports make the panel internally scrollable | Landscape phones and keyboard-constrained layouts keep every search action reachable | Demo custom UI |
 
-The mobile behavior lives in the
-[custom demo panel](apps/demo/src/CustomSearchPanel.tsx) and its
-[responsive styles](apps/demo/src/styles.css), because applications own the
-headless search UI. The library intentionally does not disable
-`user-scalable` or set a restrictive maximum zoom.
+The built-in `SearchPanel` applies the viewport guard automatically. The
+[custom demo panel](apps/demo/src/CustomSearchPanel.tsx) demonstrates reusing
+the exported hook with application-owned
+[responsive styles](apps/demo/src/styles.css). The library intentionally does
+not disable `user-scalable` or set a restrictive maximum zoom.
 
 ## Registering a TanStack Virtual list
 

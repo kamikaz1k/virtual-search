@@ -1,5 +1,8 @@
 import { type FormEvent, useEffect, useRef } from "react";
-import { useVirtualSearch } from "virtual-search/react";
+import {
+  useSearchPanelViewport,
+  useVirtualSearch,
+} from "virtual-search/react";
 
 function resultLabel(
   query: string,
@@ -18,41 +21,10 @@ export function CustomSearchPanel() {
   const panelRef = useRef<HTMLFormElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (!search.isOpen) return;
-
-    const panel = panelRef.current;
-    const viewport = window.visualViewport;
-    if (!panel || !viewport) return;
-
-    const syncVisualViewport = () => {
-      panel.style.setProperty(
-        "--visual-viewport-top",
-        `${viewport.offsetTop}px`,
-      );
-      panel.style.setProperty(
-        "--visual-viewport-left",
-        `${viewport.offsetLeft}px`,
-      );
-      panel.style.setProperty(
-        "--visual-viewport-width",
-        `${viewport.width}px`,
-      );
-      panel.style.setProperty(
-        "--visual-viewport-height",
-        `${viewport.height}px`,
-      );
-    };
-
-    syncVisualViewport();
-    viewport.addEventListener("resize", syncVisualViewport);
-    viewport.addEventListener("scroll", syncVisualViewport);
-
-    return () => {
-      viewport.removeEventListener("resize", syncVisualViewport);
-      viewport.removeEventListener("scroll", syncVisualViewport);
-    };
-  }, [search.isOpen]);
+  useSearchPanelViewport(panelRef, {
+    enabled: search.isOpen,
+    padding: 10,
+  });
 
   useEffect(() => {
     if (!search.isOpen) return;

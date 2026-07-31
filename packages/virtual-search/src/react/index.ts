@@ -22,6 +22,10 @@ export {
   type SearchPanelProps,
 } from "./search-panel";
 export {
+  useSearchPanelViewport,
+  type SearchPanelViewportOptions,
+} from "./search-panel-viewport";
+export {
   useFindShortcut,
   type FindShortcutOptions,
 } from "./shortcuts";
