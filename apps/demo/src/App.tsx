@@ -1,12 +1,12 @@
 import { useMemo, useRef, useState, useTransition } from "react";
 import {
-  SearchPanel,
   useFindShortcut,
   useVirtualSearch,
   VirtualSearchProvider,
 } from "virtual-search/react";
 import { createMainThreadExecutor } from "virtual-search";
 import { createWorkerExecutor } from "virtual-search/worker";
+import { CustomSearchPanel } from "./CustomSearchPanel";
 import { getStressDataset, standardDataset } from "./data";
 import { CustomerList, OrderList } from "./VirtualList";
 
@@ -40,7 +40,7 @@ function SearchControls() {
         <span>Find anywhere</span>
         <kbd>⌘ F</kbd>
       </button>
-      <SearchPanel className="search-panel" />
+      <CustomSearchPanel />
     </>
   );
 }

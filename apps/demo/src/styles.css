@@ -221,52 +221,152 @@ kbd {
   background: var(--signal);
 }
 
-.search-panel {
+.command-search {
   position: fixed;
   z-index: 30;
   right: 22px;
   top: 22px;
-  display: grid;
-  grid-template-columns: minmax(220px, 360px) auto repeat(3, 42px);
-  align-items: center;
-  gap: 0;
-  padding: 6px;
+  width: min(620px, calc(100vw - 44px));
   border: 1px solid var(--ink);
-  background: var(--paper);
+  background:
+    linear-gradient(135deg, rgba(217, 255, 72, 0.14), transparent 42%),
+    var(--paper);
   box-shadow: 10px 10px 0 var(--ink);
   font: 500 12px/1 "DM Mono", monospace;
 }
 
-.search-panel input {
-  width: 100%;
-  height: 42px;
-  border: 0;
-  border-bottom: 2px solid var(--ink);
-  outline: 0;
-  background: transparent;
-  padding: 0 10px;
+.command-search-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 36px;
+  padding-left: 14px;
+  border-bottom: 1px solid var(--ink);
 }
 
-.search-panel output {
-  min-width: 104px;
+.command-search-kicker {
+  color: var(--signal);
+  font-size: 10px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.command-search-close {
+  align-self: stretch;
+  border: 0;
+  border-left: 1px solid var(--ink);
+  padding: 0 12px;
+  background: transparent;
+  cursor: pointer;
+  font: 500 10px/1 "DM Mono", monospace;
+  text-transform: uppercase;
+}
+
+.command-search-close:hover {
+  background: var(--signal);
+  color: var(--paper);
+}
+
+.command-search-close kbd {
+  margin-left: 5px;
+}
+
+.command-search-entry {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  align-items: center;
+}
+
+.command-search-glyph {
+  display: grid;
+  place-items: center;
+  align-self: stretch;
+  border-right: 1px solid var(--ink);
+  color: var(--signal);
+  font: 400 25px/1 "Newsreader", serif;
+}
+
+.command-search-entry label {
+  display: block;
+}
+
+.command-search input {
+  width: 100%;
+  height: 72px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  padding: 0 18px;
+  color: var(--ink);
+  font: 400 clamp(20px, 3vw, 29px)/1 "Newsreader", serif;
+}
+
+.command-search input::placeholder {
+  color: rgba(23, 24, 16, 0.45);
+}
+
+.command-search input:focus-visible {
+  box-shadow: inset 0 -4px 0 var(--signal);
+}
+
+.command-search-meta {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(80px, 150px) auto;
+  align-items: center;
+  min-height: 48px;
+  border-top: 1px solid var(--ink);
+}
+
+.command-search output {
   padding: 0 14px;
   white-space: nowrap;
 }
 
-.search-panel button {
-  width: 42px;
-  height: 42px;
+.command-search progress {
+  width: 100%;
+  height: 5px;
   border: 0;
-  border-left: 1px solid var(--rule);
-  background: transparent;
-  cursor: pointer;
+  background: rgba(23, 24, 16, 0.14);
+  accent-color: var(--signal);
 }
 
-.search-panel button:hover:not(:disabled) {
+.command-search progress::-webkit-progress-bar {
+  background: rgba(23, 24, 16, 0.14);
+}
+
+.command-search progress::-webkit-progress-value {
+  background: var(--signal);
+}
+
+.command-search progress::-moz-progress-bar {
+  background: var(--signal);
+}
+
+.command-search-actions {
+  display: flex;
+  align-self: stretch;
+  border-left: 1px solid var(--ink);
+}
+
+.command-search-actions button {
+  min-width: 70px;
+  border: 0;
+  padding: 0 11px;
+  background: transparent;
+  cursor: pointer;
+  font: 500 10px/1 "DM Mono", monospace;
+  text-transform: uppercase;
+}
+
+.command-search-actions button + button {
+  border-left: 1px solid var(--rule);
+}
+
+.command-search-actions button:hover:not(:disabled) {
   background: var(--acid);
 }
 
-.search-panel button:disabled {
+.command-search-actions button:disabled {
   opacity: 0.3;
 }
 
@@ -415,18 +515,38 @@ footer {
     font-size: clamp(62px, 20vw, 105px);
   }
 
-  .search-panel {
+  .command-search {
     top: 10px;
     right: 10px;
     left: 10px;
-    grid-template-columns: 1fr repeat(3, 40px);
+    width: auto;
     box-shadow: 5px 5px 0 var(--ink);
   }
 
-  .search-panel output {
-    grid-row: 2;
-    grid-column: 1 / -1;
-    padding: 9px 10px 4px;
+  .command-search-entry {
+    grid-template-columns: 42px 1fr;
+  }
+
+  .command-search input {
+    height: 62px;
+    padding: 0 12px;
+    font-size: 19px;
+  }
+
+  .command-search-meta {
+    grid-template-columns: 1fr auto;
+  }
+
+  .command-search progress {
+    display: none;
+  }
+
+  .command-search-actions button {
+    min-width: 58px;
+  }
+
+  .command-search-kicker {
+    max-width: 180px;
   }
 
   .virtual-row {

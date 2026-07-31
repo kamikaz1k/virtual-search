@@ -7,10 +7,16 @@ export {
 } from "./context";
 export {
   useVirtualSearchRegion,
-  type VirtualizerAdapter,
   type VirtualSearchRegionBinding,
   type VirtualSearchRegionOptions,
 } from "./region";
+export {
+  callbackVirtualizerAdapter,
+  type VirtualizerAdapter,
+  type VirtualizerAlignment,
+  type VirtualizerScrollCallback,
+  type VirtualizerScrollOptions,
+} from "../virtualizer";
 export {
   SearchPanel,
   type SearchPanelProps,

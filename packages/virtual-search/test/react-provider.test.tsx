@@ -1,6 +1,6 @@
 import { StrictMode, useRef } from "react";
-import { act, render } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { act, cleanup, render } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   useVirtualSearchController,
   VirtualSearchProvider,
@@ -23,20 +23,27 @@ beforeEach(() => {
   });
 });
 
+afterEach(cleanup);
+
 function RegionRegistration({
   anchorRef,
+  anchorMode = "ref",
   onController,
   scrollToIndex,
 }: {
   anchorRef: React.RefObject<HTMLDivElement | null>;
+  anchorMode?: "ref" | "getter";
   onController(controller: VirtualSearchController): void;
   scrollToIndex(): void;
 }) {
   const controller = useVirtualSearchController();
   onController(controller);
+  const anchor = anchorMode === "getter"
+    ? { getAnchor: () => anchorRef.current }
+    : { anchorRef };
   useVirtualSearchRegion({
     id: "strict-region",
-    anchorRef,
+    ...anchor,
     items: [{ id: "row", text: "Needle" }],
     getKey: item => item.id,
     getText: item => item.text,
@@ -46,9 +53,11 @@ function RegionRegistration({
 }
 
 function TestApp({
+  anchorMode,
   onController,
   scrollToIndex,
 }: {
+  anchorMode?: "ref" | "getter";
   onController(controller: VirtualSearchController): void;
   scrollToIndex(): void;
 }) {
@@ -59,6 +68,7 @@ function TestApp({
     <VirtualSearchProvider rootRef={rootRef}>
       <RegionRegistration
         anchorRef={anchorRef}
+        {...(anchorMode ? { anchorMode } : {})}
         onController={onController}
         scrollToIndex={scrollToIndex}
       />
@@ -98,5 +108,34 @@ describe("VirtualSearchProvider", () => {
 
     expect(scrollToIndex).toHaveBeenCalledOnce();
     expect(controller?.getState().status).toBe("ready");
+  });
+
+  it("supports a lazy anchor getter", async () => {
+    let controller: VirtualSearchController | undefined;
+    const scrollToIndex = vi.fn(() => {
+      const anchor = document.querySelector("main > div");
+      if (!anchor) return;
+      const item = document.createElement("div");
+      item.dataset.virtualSearchItem = "row";
+      item.textContent = "Needle";
+      anchor.append(item);
+    });
+
+    render(
+      <TestApp
+        anchorMode="getter"
+        onController={value => {
+          controller = value;
+        }}
+        scrollToIndex={scrollToIndex}
+      />,
+    );
+
+    await act(async () => {
+      await controller?.setQuery("needle");
+    });
+
+    expect(scrollToIndex).toHaveBeenCalledOnce();
+    expect(controller?.getState().matches).toHaveLength(1);
   });
 });

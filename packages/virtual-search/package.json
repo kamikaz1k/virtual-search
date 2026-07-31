@@ -13,6 +13,14 @@
       "types": "./dist/react/index.d.ts",
       "import": "./dist/react/index.js"
     },
+    "./react-window": {
+      "types": "./dist/react-window/index.d.ts",
+      "import": "./dist/react-window/index.js"
+    },
+    "./react-virtuoso": {
+      "types": "./dist/react-virtuoso/index.d.ts",
+      "import": "./dist/react-virtuoso/index.js"
+    },
     "./tanstack": {
       "types": "./dist/tanstack/index.d.ts",
       "import": "./dist/tanstack/index.js"

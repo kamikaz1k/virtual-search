@@ -12,32 +12,37 @@ import {
   REGION_ATTRIBUTE,
 } from "../corpus";
 import type { SearchTextPart, VirtualSearchRegion } from "../types";
+import type { VirtualizerAdapter } from "../virtualizer";
 import { useVirtualSearchController } from "./context";
 
-export interface VirtualizerAdapter {
-  scrollToIndex(
-    index: number,
-    options: { align: "center" | "start" | "end" | "auto" },
-  ): void | Promise<void>;
-}
+type RegionAnchor =
+  | {
+      anchorRef: RefObject<Element | null>;
+      getAnchor?: never;
+    }
+  | {
+      anchorRef?: never;
+      getAnchor(): Element | null;
+    };
 
-interface BaseRegionOptions<Item> {
+interface RegionOptions<Item> {
   id: string;
-  anchorRef: RefObject<Element | null>;
   items: readonly Item[];
   getKey(item: Item): string;
   virtualizer: VirtualizerAdapter;
 }
 
-interface StringRegionOptions<Item> extends BaseRegionOptions<Item> {
+type BaseRegionOptions<Item> = RegionOptions<Item> & RegionAnchor;
+
+type StringRegionOptions<Item> = BaseRegionOptions<Item> & {
   getText(item: Item): string;
   getSearchParts?: never;
-}
+};
 
-interface PartsRegionOptions<Item> extends BaseRegionOptions<Item> {
+type PartsRegionOptions<Item> = BaseRegionOptions<Item> & {
   getText?: never;
   getSearchParts(item: Item): readonly SearchTextPart[];
-}
+};
 
 export type VirtualSearchRegionOptions<Item> =
   | StringRegionOptions<Item>
@@ -49,6 +54,12 @@ export interface VirtualSearchRegionBinding {
   };
   itemProps(key: string): HTMLAttributes<HTMLElement>;
   partProps(key: string, partId: string): HTMLAttributes<HTMLElement>;
+}
+
+function anchorFor<Item>(options: VirtualSearchRegionOptions<Item>) {
+  return options.getAnchor
+    ? options.getAnchor()
+    : options.anchorRef.current;
 }
 
 function queryItem(anchor: Element, key: string): Element | null {
@@ -115,7 +126,7 @@ export function useVirtualSearchRegion<Item>(
   useLayoutEffect(() => {
     const region: VirtualSearchRegion = {
       id: options.id,
-      anchor: () => optionsRef.current.anchorRef.current,
+      anchor: () => anchorFor(optionsRef.current),
       getUnits: () => {
         const current = optionsRef.current;
         return current.items.map(item => ({
@@ -137,7 +148,7 @@ export function useVirtualSearchRegion<Item>(
         });
         if (context.signal.aborted) return null;
 
-        const anchor = current.anchorRef.current;
+        const anchor = anchorFor(current);
         if (!anchor) return null;
 
         const item = await waitForRenderedItem(

@@ -33,8 +33,9 @@ must be served over HTTP. To inspect a production build, run `pnpm build`
 followed by `pnpm preview`.
 
 The demo contains static content and 2,500 records split between two
-independent virtualized lists. Search for `Alice`, or for
-`alice.chen.999@example.test` to reveal a row near the end of the first list.
+independent virtualized lists, with a toggle for a 100,000-record stress
+dataset. Search for `Alice`, or enable 100K and search for
+`alice.chen.39999@example.test` to reveal the final customer.
 
 ## React setup
 
@@ -70,6 +71,59 @@ function App() {
 
 `SearchPanel` is optional. `useVirtualSearch()` exposes headless state and
 `open`, `close`, `setQuery`, `next`, `previous`, and `goTo` commands.
+
+## Custom search UI
+
+The demo uses the headless hook to provide its own input, result counter, and
+navigation controls. A minimal custom panel looks like this:
+
+```tsx
+import { useVirtualSearch } from "virtual-search/react";
+
+function CustomSearch() {
+  const search = useVirtualSearch();
+
+  if (!search.isOpen) return null;
+
+  return (
+    <form
+      role="search"
+      data-virtual-search-panel=""
+      aria-busy={search.status === "searching"}
+      onSubmit={event => {
+        event.preventDefault();
+        void search.next();
+      }}
+    >
+      <input
+        type="search"
+        aria-label="Search all page content"
+        value={search.query}
+        onChange={event => void search.setQuery(event.target.value)}
+      />
+      <output aria-live="polite">
+        {search.status === "searching"
+          ? "Searching…"
+          : search.matches.length === 0
+            ? "No results"
+            : `${search.activeIndex + 1} of ${search.matches.length}`}
+      </output>
+      <button type="button" onClick={() => void search.previous()}>
+        Previous
+      </button>
+      <button type="button" onClick={() => void search.next()}>
+        Next
+      </button>
+      <button type="button" onClick={search.close}>
+        Close
+      </button>
+    </form>
+  );
+}
+```
+
+Keep `data-virtual-search-panel` on the custom panel and use a
+`<input type="search">` so `useFindShortcut()` can focus it after Cmd/Ctrl+F.
 
 ## Registering a TanStack Virtual list
 
@@ -120,6 +174,87 @@ Apply the returned attributes to the region, rows, and searchable text parts:
 
 For simple rows, replace `getSearchParts` with `getText`. The rendered row's
 text must then exactly correspond to that authoritative string.
+
+## Other virtualizers
+
+Adapters are included for both current and legacy React Window APIs, React
+Virtuoso, and callback-driven virtualizers. They have no runtime dependency on
+those packages.
+
+### React Window
+
+React Window v2 exposes `scrollToRow()` and its root element through
+`ListImperativeAPI`. Pass the ref object itself so it is resolved after mount:
+
+```tsx
+import { List, useListRef } from "react-window";
+import { useVirtualSearchRegion } from "virtual-search/react";
+import { reactWindowAdapter } from "virtual-search/react-window";
+
+const listRef = useListRef();
+const search = useVirtualSearchRegion({
+  id: "customers",
+  getAnchor: () => listRef.current?.element ?? null,
+  items: customers,
+  getKey: customer => customer.id,
+  getText: customer => customer.name,
+  virtualizer: reactWindowAdapter(listRef),
+});
+
+<List
+  listRef={listRef}
+  rowCount={customers.length}
+  /* Spread search.regionProps on the List and search.itemProps(key) on rows. */
+/>;
+```
+
+The same adapter detects React Window v1 handles and calls
+`scrollToItem(index, align)`. With v1, pass the list's `outerRef` as
+`anchorRef`.
+
+### React Virtuoso
+
+```tsx
+import { Virtuoso, type VirtuosoHandle } from "react-virtuoso";
+import { useVirtualSearchRegion } from "virtual-search/react";
+import { reactVirtuosoAdapter } from "virtual-search/react-virtuoso";
+
+const virtuosoRef = useRef<VirtuosoHandle>(null);
+const scrollerRef = useRef<Element>(null);
+const search = useVirtualSearchRegion({
+  id: "orders",
+  anchorRef: scrollerRef,
+  items: orders,
+  getKey: order => order.id,
+  getText: order => order.reference,
+  virtualizer: reactVirtuosoAdapter(virtuosoRef),
+});
+
+<Virtuoso
+  ref={virtuosoRef}
+  scrollerRef={element => {
+    scrollerRef.current = element instanceof Element ? element : null;
+  }}
+  data={orders}
+  {...search.regionProps}
+  itemContent={(_, order) => (
+    <div {...search.itemProps(order.id)}>{order.reference}</div>
+  )}
+/>;
+```
+
+### Callback adapter
+
+```tsx
+import { callbackVirtualizerAdapter } from "virtual-search";
+
+const virtualizer = callbackVirtualizerAdapter(
+  (index, { align }) => myVirtualizer.reveal(index, align),
+);
+```
+
+The raw `VirtualizerAdapter` interface is also exported for application-specific
+integrations.
 
 ## Worker execution
 
