@@ -148,6 +148,7 @@ function RevealableContentDemo() {
 
 function RecordsDemo() {
   const rootRef = useRef<HTMLElement>(null);
+  const diffDemoHref = `${import.meta.env.BASE_URL}diff`;
   const [useStressDataset, setUseStressDataset] = useState(false);
   const [isDatasetPending, startDatasetTransition] = useTransition();
   const dataset = useMemo(
@@ -164,10 +165,23 @@ function RecordsDemo() {
       <SearchControls />
 
       <main ref={rootRef}>
+        <nav className="demo-browser" aria-label="Demo browser">
+          <span className="demo-browser-label">Demo browser</span>
+          <span className="demo-browser-current" aria-current="page">
+            <span>01</span>
+            Virtual records
+          </span>
+          <a className="demo-browser-link" href={diffDemoHref}>
+            <span>02</span>
+            Diff viewer
+            <span className="demo-browser-link-detail">Virtualized patch ↗</span>
+          </a>
+        </nav>
+
         <header className="hero">
           <div className="hero-kicker">
             <span>Virtual Search</span>
-            <a className="demo-route-link" href={`${import.meta.env.BASE_URL}diff`}>
+            <a className="demo-route-link" href={diffDemoHref}>
               Open diff viewer demo <span aria-hidden="true">↗</span>
             </a>
             <label className="dataset-toggle">
@@ -228,7 +242,9 @@ function RecordsDemo() {
         <footer>
           <span>{dataset.total.toLocaleString()} virtual records</span>
           <span>One ordered search surface</span>
-          <span>End of document</span>
+          <a className="demo-route-link" href={diffDemoHref}>
+            Continue to diff viewer <span aria-hidden="true">↗</span>
+          </a>
         </footer>
       </main>
     </VirtualSearchProvider>

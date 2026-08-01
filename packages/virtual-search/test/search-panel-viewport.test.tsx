@@ -88,6 +88,8 @@ describe("SearchPanel visual viewport behavior", () => {
       .toBe("100px");
     expect(panel.style.getPropertyValue("--virtual-search-viewport-height"))
       .toBe("300px");
+    expect(panel.style.top).toBe("max(8px, env(safe-area-inset-top))");
+    expect(panel.style.bottom).toBe("auto");
     expect(panel.style.translate).toBe("0px 98px");
   });
 

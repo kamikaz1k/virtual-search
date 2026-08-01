@@ -33,6 +33,7 @@ export function CustomSearchPanel({
   const inputRef = useRef<HTMLInputElement>(null);
 
   useSearchPanelViewport(panelRef, {
+    anchor: "top",
     enabled: search.isOpen,
     padding: 10,
   });

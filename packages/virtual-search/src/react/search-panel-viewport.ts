@@ -1,9 +1,12 @@
 import { type RefObject, useEffect } from "react";
 
 export interface SearchPanelViewportOptions {
+  anchor?: SearchPanelViewportAnchor;
   enabled?: boolean;
   padding?: number;
 }
+
+export type SearchPanelViewportAnchor = "preserve" | "top";
 
 const managedProperties = [
   "translate",
@@ -11,6 +14,8 @@ const managedProperties = [
   "max-height",
   "overflow",
   "overscroll-behavior",
+  "top",
+  "bottom",
 ] as const;
 
 const viewportProperties = [
@@ -53,6 +58,7 @@ function restoreProperties(
 export function useSearchPanelViewport<ElementType extends HTMLElement>(
   panelRef: RefObject<ElementType | null>,
   {
+    anchor = "preserve",
     enabled = true,
     padding = 8,
   }: SearchPanelViewportOptions = {},
@@ -71,6 +77,11 @@ export function useSearchPanelViewport<ElementType extends HTMLElement>(
     const sync = () => {
       frame = 0;
       restoreProperties(style, originalManaged);
+
+      if (anchor === "top") {
+        style.top = `max(${inset}px, env(safe-area-inset-top))`;
+        style.bottom = "auto";
+      }
 
       style.setProperty(
         "--virtual-search-viewport-top",
@@ -149,5 +160,5 @@ export function useSearchPanelViewport<ElementType extends HTMLElement>(
       restoreProperties(style, originalManaged);
       restoreProperties(style, originalViewport);
     };
-  }, [enabled, padding, panelRef]);
+  }, [anchor, enabled, padding, panelRef]);
 }

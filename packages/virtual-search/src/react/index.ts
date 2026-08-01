@@ -23,6 +23,7 @@ export {
 } from "./search-panel";
 export {
   useSearchPanelViewport,
+  type SearchPanelViewportAnchor,
   type SearchPanelViewportOptions,
 } from "./search-panel-viewport";
 export {

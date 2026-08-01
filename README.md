@@ -97,6 +97,7 @@ function CustomSearch() {
   const search = useVirtualSearch();
   const panelRef = useRef<HTMLFormElement>(null);
   useSearchPanelViewport(panelRef, {
+    anchor: "top",
     enabled: search.isOpen,
     padding: 10,
   });
@@ -145,7 +146,9 @@ Keep `data-virtual-search-panel` on the custom panel and use a
 `<input type="search">` so `useFindShortcut()` can focus it after Cmd/Ctrl+F.
 `useSearchPanelViewport()` is optional for custom panels; it keeps fixed search
 UI inside the browser's visual viewport while the software keyboard is open.
-The built-in `SearchPanel` enables this behavior automatically. Pass
+The built-in `SearchPanel` enables this behavior automatically and defaults to
+`viewportAnchor="top"`. Pass `viewportAnchor="preserve"` when your application
+owns its anchor, or
 `keepInVisualViewport={false}` only when an application provides its own
 viewport management.
 
@@ -154,9 +157,10 @@ The hook also publishes
 `--virtual-search-viewport-left`,
 `--virtual-search-viewport-width`, and
 `--virtual-search-viewport-height` on the panel for advanced layouts. Prefer
-ordinary fixed-position anchors such as `bottom` and `right`; the hook applies
-the viewport correction, rechecks it during document scrolling, and constrains
-oversized panels when the keyboard leaves less usable space.
+ordinary fixed-position anchors. A top anchor is the most reliable mobile
+choice because the software keyboard changes the bottom edge of the visual
+viewport; the hook applies a defensive viewport correction and constrains
+oversized panels when less usable space remains.
 
 ## Native-like UX details
 
@@ -176,7 +180,7 @@ implementation:
 | Result counts use an ARIA live region and searching uses `aria-busy` | Assistive technology receives the same progress and `X of Y` feedback as sighted users | Search UI |
 | CSS Custom Highlight ranges avoid inserting `<mark>` elements | Highlighting does not mutate or fight framework-owned DOM | Core highlighter |
 | The search panel follows the browser's visual viewport | When the software keyboard opens or result navigation pans the page, fixed search controls remain visible instead of being stranded outside the usable viewport | React `SearchPanel` and `useSearchPanelViewport()` |
-| The mobile demo anchors search to the bottom and removes decorative chrome | The panel stays in thumb reach without obscuring more searchable content than necessary | Demo custom UI |
+| The mobile demo keeps search anchored to the top and removes decorative chrome | The panel remains stable while the iOS keyboard and browser toolbar animate, without relying on delayed bottom-viewport measurements | Demo custom UI |
 | Safe-area insets and `viewport-fit=cover` are respected | The panel avoids notches and rounded screen edges without disabling pinch zoom | Demo custom UI |
 | Mobile input text remains at least 16px and touch controls are enlarged | Focusing search does not trigger iOS text-field zoom, and navigation remains comfortable by touch | Demo custom UI |
 | Extremely short viewports make the panel internally scrollable | Landscape phones and keyboard-constrained layouts keep every search action reachable | Demo custom UI |
@@ -186,6 +190,12 @@ The built-in `SearchPanel` applies the viewport guard automatically. The
 the exported hook with application-owned
 [responsive styles](apps/demo/src/styles.css). The library intentionally does
 not disable `user-scalable` or set a restrictive maximum zoom.
+
+For mobile custom panels, prefer a permanent top anchor over switching position
+when an input receives focus. Mobile Safari may report the keyboard-adjusted
+bottom of the visual viewport only after its animation completes; a top anchor
+does not need to infer the keyboard height and therefore remains predictable
+during page scrolling and result navigation.
 
 ## Considerations
 

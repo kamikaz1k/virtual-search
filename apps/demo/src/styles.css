@@ -68,6 +68,58 @@ main {
   text-transform: uppercase;
 }
 
+.demo-browser {
+  display: grid;
+  grid-template-columns: minmax(160px, 0.7fr) repeat(2, minmax(210px, 1fr));
+  margin-top: 20px;
+  border: 1px solid var(--ink);
+  font: 500 11px/1 "DM Mono", monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.demo-browser-label,
+.demo-browser-current,
+.demo-browser-link {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+}
+
+.demo-browser-label {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.demo-browser-current {
+  border-right: 1px solid var(--ink);
+}
+
+.demo-browser-current > span,
+.demo-browser-link > span:first-child {
+  color: var(--signal);
+}
+
+.demo-browser-link {
+  color: var(--ink);
+  text-decoration: none;
+  transition: background 140ms ease, color 140ms ease;
+}
+
+.demo-browser-link-detail {
+  margin-left: auto;
+  color: var(--signal);
+  font-size: 9px;
+}
+
+.demo-browser-link:hover,
+.demo-browser-link:focus-visible {
+  outline: 0;
+  background: var(--acid);
+}
+
 .hero {
   min-height: 86vh;
   display: grid;
@@ -709,6 +761,10 @@ footer {
   padding-top: 20px;
 }
 
+footer .demo-route-link {
+  text-align: right;
+}
+
 ::highlight(virtual-search-match) {
   color: inherit;
   background: rgba(255, 77, 0, 0.28);
@@ -725,6 +781,28 @@ footer {
     width: min(100% - 24px, 1180px);
   }
 
+  .demo-browser {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .demo-browser-label {
+    grid-column: 1 / -1;
+    min-height: 34px;
+  }
+
+  .demo-browser-current {
+    border-right: 1px solid var(--ink);
+  }
+
+  .demo-browser-current,
+  .demo-browser-link {
+    min-height: 48px;
+  }
+
+  .demo-browser-link-detail {
+    display: none;
+  }
+
   .hero {
     grid-template-columns: 1fr;
     min-height: auto;
@@ -736,11 +814,13 @@ footer {
   }
 
   .command-search {
-    inset: auto max(10px, env(safe-area-inset-right))
-      max(10px, env(safe-area-inset-bottom))
+    inset: max(10px, env(safe-area-inset-top))
+      max(10px, env(safe-area-inset-right)) auto
       max(10px, env(safe-area-inset-left));
     width: auto;
-    max-height: calc(100dvh - 20px);
+    max-height: calc(
+      100dvh - max(20px, calc(env(safe-area-inset-top) + 10px))
+    );
     overflow: auto;
     overscroll-behavior: contain;
     box-shadow: 4px 4px 0 var(--ink);

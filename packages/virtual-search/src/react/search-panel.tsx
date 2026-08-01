@@ -1,11 +1,15 @@
 import { type FormEvent, useEffect, useRef } from "react";
 import { useVirtualSearch } from "./context";
-import { useSearchPanelViewport } from "./search-panel-viewport";
+import {
+  type SearchPanelViewportAnchor,
+  useSearchPanelViewport,
+} from "./search-panel-viewport";
 
 export interface SearchPanelProps {
   className?: string;
   keepInVisualViewport?: boolean;
   placeholder?: string;
+  viewportAnchor?: SearchPanelViewportAnchor;
   viewportPadding?: number;
 }
 
@@ -13,6 +17,7 @@ export function SearchPanel({
   className,
   keepInVisualViewport = true,
   placeholder = "Find on page",
+  viewportAnchor = "top",
   viewportPadding = 8,
 }: SearchPanelProps) {
   const search = useVirtualSearch();
@@ -20,6 +25,7 @@ export function SearchPanel({
   const inputRef = useRef<HTMLInputElement>(null);
 
   useSearchPanelViewport(panelRef, {
+    anchor: viewportAnchor,
     enabled: search.isOpen && keepInVisualViewport,
     padding: viewportPadding,
   });
