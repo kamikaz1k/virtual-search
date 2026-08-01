@@ -8,6 +8,8 @@ export interface SearchPanelViewportOptions {
 
 export type SearchPanelViewportAnchor = "preserve" | "top";
 
+const VIEWPORT_SETTLE_MS = 500;
+
 const managedProperties = [
   "translate",
   "max-width",
@@ -73,15 +75,11 @@ export function useSearchPanelViewport<ElementType extends HTMLElement>(
     const originalViewport = captureProperties(style, viewportProperties);
     const inset = Math.max(0, padding);
     let frame = 0;
+    let settleUntil = 0;
 
     const sync = () => {
       frame = 0;
       restoreProperties(style, originalManaged);
-
-      if (anchor === "top") {
-        style.top = `max(${inset}px, env(safe-area-inset-top))`;
-        style.bottom = "auto";
-      }
 
       style.setProperty(
         "--virtual-search-viewport-top",
@@ -99,6 +97,11 @@ export function useSearchPanelViewport<ElementType extends HTMLElement>(
         "--virtual-search-viewport-height",
         `${viewport.height}px`,
       );
+
+      if (anchor === "top") {
+        style.top = `max(calc(var(--virtual-search-viewport-top) + ${inset}px), env(safe-area-inset-top))`;
+        style.bottom = "auto";
+      }
 
       if (getComputedStyle(panel).position !== "fixed") return;
 
@@ -138,6 +141,10 @@ export function useSearchPanelViewport<ElementType extends HTMLElement>(
       if (x !== 0 || y !== 0) {
         style.translate = `${x}px ${y}px`;
       }
+
+      if (performance.now() < settleUntil) {
+        frame = requestAnimationFrame(sync);
+      }
     };
 
     const scheduleSync = () => {
@@ -145,24 +152,33 @@ export function useSearchPanelViewport<ElementType extends HTMLElement>(
       frame = requestAnimationFrame(sync);
     };
 
+    const scheduleSettledSync = () => {
+      settleUntil = performance.now() + VIEWPORT_SETTLE_MS;
+      scheduleSync();
+    };
+
     sync();
-    viewport.addEventListener("resize", scheduleSync);
-    viewport.addEventListener("scroll", scheduleSync);
-    if (anchor === "preserve") {
-      globalThis.addEventListener("scroll", scheduleSync, { passive: true });
-    }
+    viewport.addEventListener("resize", scheduleSettledSync);
+    viewport.addEventListener("scroll", scheduleSettledSync);
+    viewport.addEventListener("scrollend", scheduleSync);
+    globalThis.addEventListener("scroll", scheduleSettledSync, {
+      passive: true,
+    });
+    panel.addEventListener("focusin", scheduleSettledSync);
+    panel.addEventListener("focusout", scheduleSettledSync);
     const resizeObserver = typeof ResizeObserver === "undefined"
       ? undefined
-      : new ResizeObserver(scheduleSync);
+      : new ResizeObserver(scheduleSettledSync);
     resizeObserver?.observe(panel);
 
     return () => {
       if (frame !== 0) cancelAnimationFrame(frame);
-      viewport.removeEventListener("resize", scheduleSync);
-      viewport.removeEventListener("scroll", scheduleSync);
-      if (anchor === "preserve") {
-        globalThis.removeEventListener("scroll", scheduleSync);
-      }
+      viewport.removeEventListener("resize", scheduleSettledSync);
+      viewport.removeEventListener("scroll", scheduleSettledSync);
+      viewport.removeEventListener("scrollend", scheduleSync);
+      globalThis.removeEventListener("scroll", scheduleSettledSync);
+      panel.removeEventListener("focusin", scheduleSettledSync);
+      panel.removeEventListener("focusout", scheduleSettledSync);
       resizeObserver?.disconnect();
       restoreProperties(style, originalManaged);
       restoreProperties(style, originalViewport);

@@ -37,6 +37,11 @@ jobs:
       - name: Build demo
         run: pnpm --filter @virtual-search/demo build
 
+      - name: Add client route entry points
+        run: |
+          mkdir -p apps/demo/dist/diff
+          cp apps/demo/dist/index.html apps/demo/dist/diff/index.html
+
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 

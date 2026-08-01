@@ -55,7 +55,7 @@ function TestProvider({
 }
 
 describe("SearchPanel visual viewport behavior", () => {
-  it("does not translate a top-anchored panel during document scrolling", async () => {
+  it("anchors the panel to the visual viewport's top", async () => {
     const viewport = Object.assign(new EventTarget(), {
       height: 300,
       offsetLeft: 0,
@@ -101,15 +101,72 @@ describe("SearchPanel visual viewport behavior", () => {
       .toBe("100px");
     expect(panel.style.getPropertyValue("--virtual-search-viewport-height"))
       .toBe("300px");
-    expect(panel.style.top).toBe("max(8px, env(safe-area-inset-top))");
+    expect(panel.style.top).toBe(
+      "max(calc(var(--virtual-search-viewport-top) + 8px), env(safe-area-inset-top))",
+    );
     expect(panel.style.bottom).toBe("auto");
     expect(panel.style.translate).toBe("");
 
     viewport.offsetTop = 240;
     act(() => globalThis.dispatchEvent(new Event("scroll")));
 
-    await new Promise(resolve => requestAnimationFrame(resolve));
+    await waitFor(() => {
+      expect(panel.style.getPropertyValue("--virtual-search-viewport-top"))
+        .toBe("240px");
+    });
     expect(panel.style.translate).toBe("");
+  });
+
+  it("resamples a temporarily stale iOS viewport offset", async () => {
+    const viewport = Object.assign(new EventTarget(), {
+      height: 300,
+      offsetLeft: 0,
+      offsetTop: 0,
+      width: 320,
+    });
+    Object.defineProperty(globalThis, "visualViewport", {
+      configurable: true,
+      value: viewport,
+    });
+    const style = document.createElement("style");
+    style.dataset.viewportTestStyle = "";
+    style.textContent = ".fixed-panel { position: fixed; }";
+    document.head.append(style);
+
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({
+      x: 10,
+      y: 10,
+      top: 10,
+      right: 310,
+      bottom: 130,
+      left: 10,
+      width: 300,
+      height: 120,
+      toJSON: () => ({}),
+    });
+
+    let controller: VirtualSearchController | undefined;
+    const rendered = render(
+      <TestProvider
+        onController={value => {
+          controller = value;
+        }}
+      />,
+    );
+
+    await act(async () => {
+      controller?.open();
+    });
+
+    const panel = rendered.getByRole("search");
+    act(() => globalThis.dispatchEvent(new Event("scroll")));
+    await new Promise(resolve => setTimeout(resolve, 50));
+    viewport.offsetTop = 180;
+
+    await waitFor(() => {
+      expect(panel.style.getPropertyValue("--virtual-search-viewport-top"))
+        .toBe("180px");
+    });
   });
 
   it("rechecks the panel position when the document scrolls", async () => {

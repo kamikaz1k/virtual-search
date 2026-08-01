@@ -201,6 +201,10 @@ during page scrolling and result navigation.
 
 ## Considerations
 
+Ongoing iOS keyboard and visual-viewport research, failed approaches, device
+reproductions, and the validation matrix live in
+[VIEWPORT_RESEARCH.md](VIEWPORT_RESEARCH.md).
+
 ### Responsive and otherwise invisible content
 
 Native Find searches the page as it exists in the current presentation.
