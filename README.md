@@ -181,6 +181,7 @@ implementation:
 | Escape closes search and restores the previously focused element | Keyboard users return to the control they were using before opening Find | Core and React shortcut binding |
 | Result counts use an ARIA live region and searching uses `aria-busy` | Assistive technology receives the same progress and `X of Y` feedback as sighted users | Search UI |
 | CSS Custom Highlight ranges avoid inserting `<mark>` elements | Highlighting does not mutate or fight framework-owned DOM | Core highlighter |
+| Shadow DOM ranges remain owned by the core highlighter | Integrations return the real range, so query changes and cancellation cannot leave adapter-owned highlights behind | Core and custom region adapter |
 | Top-anchored search panels do not inherit visual-viewport scroll offsets | Result navigation can pan the document without translating the already-fixed controls out of view; application-owned anchors can opt into `"preserve"` correction | React `SearchPanel` and `useSearchPanelViewport()` |
 | The mobile demo keeps search anchored to the top and removes decorative chrome | The panel remains stable while the iOS keyboard and browser toolbar animate, without relying on delayed bottom-viewport measurements | Demo custom UI |
 | Safe-area insets and `viewport-fit=cover` are respected | The panel avoids notches and rounded screen edges without disabling pinch zoom | Demo custom UI |
@@ -428,6 +429,39 @@ Applications control native CSS highlights:
 Search and navigation remain functional when the CSS Custom Highlight API is
 unavailable, but v1 intentionally does not mutate framework-owned DOM with a
 `<mark>` fallback.
+
+### Shadow DOM highlights
+
+A custom region's `locate()` hook may return ranges inside a shadow root. The
+core traverses through the shadow host for visibility validation and owns those
+ranges through the same `virtual-search-match` and `virtual-search-active`
+highlights used for ordinary DOM content. Do not create a second integration-
+owned highlight in `reveal()`.
+
+Highlight pseudo-elements have their own inheritance model. A page-level rule
+can therefore provide the visible style through the shadow host, while a rule
+in the component stylesheet can customize it more precisely. Virtual Search
+does not assume which strategy the application uses and never inserts or
+removes styles from an application-owned document or shadow root. When a
+returned shadow range does not appear to have visible computed styles from
+either source, it emits one actionable console warning for that region and
+highlight name.
+
+The diagnostic uses computed highlight styles as a best-effort check. Disable
+it when an application intentionally provides an invisible highlight or owns a
+styling mechanism the browser cannot expose through `getComputedStyle()`:
+
+```tsx
+<VirtualSearchProvider
+  rootRef={rootRef}
+  diagnostics={{ missingHighlightStyles: false }}
+>
+  {/* ... */}
+</VirtualSearchProvider>
+```
+
+The core controller accepts the same `diagnostics` option. Disabling the
+warning does not change search, range ownership, or highlighting behavior.
 
 See [the v1 contract](docs/V1_CONTRACT.md) and
 [the research notes](RESEARCH.md) for scope and design rationale.

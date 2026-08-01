@@ -21,6 +21,11 @@ and records that are not currently mounted by virtualized lists.
   highlighting, and scrolling to the rendered range.
 - The active match and all mounted inactive matches are highlighted when the
   CSS Custom Highlight API is available.
+- Custom regions may locate explicit ranges inside shadow roots. Visibility
+  validation follows the composed tree through each shadow host.
+- Virtual Search never inserts highlight styles into application-owned
+  documents or shadow roots. A best-effort diagnostic warns once when an
+  explicit shadow range does not appear visibly styled.
 - Empty queries produce no matches.
 
 ## Initial searchable content policy
@@ -28,7 +33,9 @@ and records that are not currently mounted by virtualized lists.
 - Visible ordinary DOM and registered virtual-region data participate.
 - `script`, `style`, `template`, `noscript`, hidden, inert, and explicitly
   non-rendered subtrees do not participate.
-- Form-control values, iframes, and shadow roots are outside the initial scope.
+- Form-control values, iframes, and implicit traversal of shadow roots are
+  outside the initial scope. Custom regions can index and locate shadow content
+  explicitly.
 - A match can span rendered text nodes in one logical text part.
 - A match does not span named parts, records, or search regions.
 - DOM order, not CSS visual order, controls navigation order.

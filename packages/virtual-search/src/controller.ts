@@ -1,6 +1,11 @@
 import { buildCorpus, occurrenceIdentity, type PreparedCorpus } from "./corpus";
+import { SearchDiagnostics } from "./diagnostics";
 import { createMainThreadExecutor } from "./executors/main-thread";
-import { SearchHighlighter } from "./highlighter";
+import {
+  activeHighlightName,
+  passiveHighlightName,
+  SearchHighlighter,
+} from "./highlighter";
 import { VirtualSearchRevealError } from "./types";
 import type {
   SearchOccurrence,
@@ -28,6 +33,30 @@ function sameOccurrence(a: SearchOccurrence, b: SearchOccurrence): boolean {
     && a.end === b.end;
 }
 
+function composedParent(element: Element): Element | null {
+  if (element.parentElement) return element.parentElement;
+
+  const treeRoot = element.getRootNode();
+  const ShadowRootConstructor = element.ownerDocument.defaultView?.ShadowRoot;
+  return ShadowRootConstructor && treeRoot instanceof ShadowRootConstructor
+    ? treeRoot.host
+    : null;
+}
+
+function isComposedDescendantOf(
+  element: Element,
+  ancestor: Element,
+): boolean {
+  for (
+    let current: Element | null = element;
+    current;
+    current = composedParent(current)
+  ) {
+    if (current === ancestor) return true;
+  }
+  return false;
+}
+
 function isRangeVisible(range: Range, root: Element): boolean {
   const matchedElement = range.startContainer instanceof Element
     ? range.startContainer
@@ -37,7 +66,7 @@ function isRangeVisible(range: Range, root: Element): boolean {
   for (
     let element: Element | null = matchedElement;
     element;
-    element = element.parentElement
+    element = composedParent(element)
   ) {
     if (
       element.hasAttribute("hidden")
@@ -58,13 +87,15 @@ function isRangeVisible(range: Range, root: Element): boolean {
 
     if (element.tagName === "DETAILS" && !element.hasAttribute("open")) {
       const summary = element.querySelector(":scope > summary");
-      if (!summary?.contains(matchedElement)) return false;
+      if (!summary || !isComposedDescendantOf(matchedElement, summary)) {
+        return false;
+      }
     }
 
-    if (element === root) break;
+    if (element === root) return true;
   }
 
-  return root.contains(matchedElement);
+  return false;
 }
 
 export function createVirtualSearch(
@@ -72,6 +103,9 @@ export function createVirtualSearch(
 ): VirtualSearchController {
   const executor = options.executor ?? createMainThreadExecutor();
   const highlighter = new SearchHighlighter();
+  const diagnostics = new SearchDiagnostics(
+    options.diagnostics?.missingHighlightStyles !== false,
+  );
   const listeners = new Set<SearchStateListener>();
   const regions = new Map<string, VirtualSearchRegion>();
 
@@ -161,7 +195,13 @@ export function createVirtualSearch(
       if (signal.aborted) break;
       const document = corpus.byIdentity.get(occurrenceIdentity(match));
       if (!document) continue;
-      ranges.push(...await document.locateMounted(match, signal));
+      const located = await document.locateMounted(match, signal);
+      diagnostics.checkHighlightRanges(
+        located,
+        passiveHighlightName,
+        match.regionId,
+      );
+      ranges.push(...located);
     }
 
     return ranges;
@@ -208,6 +248,11 @@ export function createVirtualSearch(
         abort.signal,
       );
       if (abort.signal.aborted) return;
+      diagnostics.checkHighlightRanges(
+        activeRanges,
+        activeHighlightName,
+        occurrence.regionId,
+      );
       const searchRoot = root();
       if (
         !searchRoot

@@ -1,9 +1,6 @@
 import type { CodeViewHandle } from "@pierre/diffs/react";
-import { useEffect, useLayoutEffect, type RefObject } from "react";
-import {
-  useVirtualSearch,
-  useVirtualSearchController,
-} from "virtual-search/react";
+import { useLayoutEffect, type RefObject } from "react";
+import { useVirtualSearchController } from "virtual-search/react";
 import type { SearchOccurrence } from "virtual-search";
 import {
   decodeDiffUnitKey,
@@ -122,44 +119,6 @@ function rangeForOccurrence(
   return range;
 }
 
-function proxyRangeForOccurrence(
-  host: HTMLElement,
-  line: HTMLElement,
-  occurrence: SearchOccurrence,
-): Range | null {
-  const selector = `[data-virtual-search-proxy="${CSS.escape(occurrence.partId)}"]`;
-  let proxy = host.querySelector<HTMLElement>(selector);
-  if (!proxy) {
-    proxy = host.ownerDocument.createElement("span");
-    proxy.dataset.virtualSearchProxy = occurrence.partId;
-    proxy.style.cssText = [
-      "position:absolute",
-      "width:1px",
-      "height:1px",
-      "overflow:hidden",
-      "clip-path:inset(50%)",
-      "color:transparent",
-      "pointer-events:none",
-    ].join(";");
-    host.append(proxy);
-  }
-  proxy.textContent = line.textContent ?? "";
-  return rangeForOccurrence(proxy, occurrence);
-}
-
-function setShadowHighlight(range: Range | null) {
-  const css = globalThis.CSS as typeof CSS & {
-    highlights?: HighlightRegistry;
-  };
-  if (!css.highlights || typeof Highlight === "undefined") return;
-
-  if (range) {
-    css.highlights.set("diff-demo-active", new Highlight(range));
-  } else {
-    css.highlights.delete("diff-demo-active");
-  }
-}
-
 export function useCodeViewSearchRegion({
   anchorRef,
   units,
@@ -170,11 +129,6 @@ export function useCodeViewSearchRegion({
   viewerRef: RefObject<CodeViewHandle<undefined> | null>;
 }) {
   const controller = useVirtualSearchController();
-  const search = useVirtualSearch();
-
-  useEffect(() => {
-    setShadowHighlight(null);
-  }, [search.isOpen, search.query]);
 
   useLayoutEffect(() => {
     const unitsByKey = new Map(units.map(unit => [unit.key, unit]));
@@ -210,9 +164,6 @@ export function useCodeViewSearchRegion({
           context.signal,
         );
         if (context.signal.aborted) return null;
-        setShadowHighlight(
-          renderedLine ? rangeForOccurrence(renderedLine, occurrence) : null,
-        );
         return renderedLine;
       },
       locate(occurrence, renderedItem) {
@@ -224,11 +175,7 @@ export function useCodeViewSearchRegion({
           target.lineNumber,
         );
         if (!line) return [];
-        const range = proxyRangeForOccurrence(
-          renderedItem,
-          line,
-          occurrence,
-        );
+        const range = rangeForOccurrence(line, occurrence);
         return range ? [range] : [];
       },
     });

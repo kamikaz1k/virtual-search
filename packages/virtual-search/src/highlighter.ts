@@ -1,5 +1,5 @@
-const passiveHighlightName = "virtual-search-match";
-const activeHighlightName = "virtual-search-active";
+export const passiveHighlightName = "virtual-search-match";
+export const activeHighlightName = "virtual-search-active";
 
 interface HighlightRegistryLike {
   set(name: string, highlight: Highlight): void;

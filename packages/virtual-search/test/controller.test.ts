@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createVirtualSearch } from "../src/controller";
 import {
   VirtualSearchRevealError,
@@ -19,6 +19,10 @@ beforeEach(() => {
     height: 10,
     toJSON: () => ({}),
   });
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 describe("createVirtualSearch", () => {
@@ -156,6 +160,137 @@ describe("createVirtualSearch", () => {
     expect(search.getState().matches).toHaveLength(1);
     expect(reveal).toHaveBeenCalledOnce();
     expect(search.getState().status).toBe("ready");
+  });
+
+  it("accepts a located range inside a shadow root", async () => {
+    document.body.innerHTML = `<main><div id="list"></div></main>`;
+    const root = document.querySelector("main")!;
+    const anchor = document.querySelector("#list")!;
+    const host = document.createElement("div");
+    host.dataset.virtualSearchItem = "shadow-row";
+    const shadow = host.attachShadow({ mode: "open" });
+    const line = document.createElement("span");
+    line.textContent = "Shadow needle";
+    shadow.append(line);
+    anchor.append(host);
+
+    const search = createVirtualSearch({
+      root,
+      diagnostics: { missingHighlightStyles: false },
+    });
+    search.registerRegion({
+      id: "shadow-list",
+      anchor: () => anchor,
+      getUnits: () => [{
+        key: "shadow-row",
+        parts: [{ id: "text", text: "Shadow needle" }],
+      }],
+      reveal: () => host,
+      locate() {
+        const range = document.createRange();
+        range.setStart(line.firstChild!, 7);
+        range.setEnd(line.firstChild!, 13);
+        return [range];
+      },
+    });
+
+    await search.setQuery("needle");
+
+    expect(search.getState().status).toBe("ready");
+    expect(search.getState().error).toBeNull();
+  });
+
+  it("rejects a shadow range when its host is hidden", async () => {
+    document.body.innerHTML = `<main><div id="list"></div></main>`;
+    const root = document.querySelector("main")!;
+    const anchor = document.querySelector("#list")!;
+    const host = document.createElement("div");
+    host.dataset.virtualSearchItem = "shadow-row";
+    host.hidden = true;
+    const shadow = host.attachShadow({ mode: "open" });
+    const line = document.createElement("span");
+    line.textContent = "Shadow needle";
+    shadow.append(line);
+    anchor.append(host);
+
+    const search = createVirtualSearch({
+      root,
+      diagnostics: { missingHighlightStyles: false },
+    });
+    search.registerRegion({
+      id: "shadow-list",
+      anchor: () => anchor,
+      getUnits: () => [{
+        key: "shadow-row",
+        parts: [{ id: "text", text: "Shadow needle" }],
+      }],
+      reveal: () => host,
+      locate() {
+        const range = document.createRange();
+        range.selectNodeContents(line);
+        return [range];
+      },
+    });
+
+    await search.setQuery("needle");
+
+    expect(search.getState().status).toBe("error");
+    expect(search.getState().error).toBeInstanceOf(VirtualSearchRevealError);
+  });
+
+  it("warns once when a shadow range does not appear to be styled", async () => {
+    document.body.innerHTML = `<main><div id="list"></div></main>`;
+    const root = document.querySelector("main")!;
+    const anchor = document.querySelector("#list")!;
+    const host = document.createElement("diff-viewer");
+    host.dataset.virtualSearchItem = "shadow-row";
+    const shadow = host.attachShadow({ mode: "open" });
+    const line = document.createElement("span");
+    line.textContent = "Shadow needle";
+    shadow.append(line);
+    anchor.append(host);
+
+    const originalGetComputedStyle = window.getComputedStyle.bind(window);
+    vi.spyOn(window, "getComputedStyle").mockImplementation((element, pseudo) => {
+      if (!pseudo?.startsWith("::highlight(")) {
+        return originalGetComputedStyle(element);
+      }
+      return {
+        length: 1,
+        backgroundColor: "rgba(0, 0, 0, 0)",
+        color: originalGetComputedStyle(element).color,
+        textDecorationLine: originalGetComputedStyle(element).textDecorationLine,
+        textShadow: originalGetComputedStyle(element).textShadow,
+      } as CSSStyleDeclaration;
+    });
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    const search = createVirtualSearch({ root });
+    search.registerRegion({
+      id: "shadow-list",
+      anchor: () => anchor,
+      getUnits: () => [{
+        key: "shadow-row",
+        parts: [{ id: "text", text: "Shadow needle" }],
+      }],
+      reveal: () => host,
+      locate() {
+        const range = document.createRange();
+        range.selectNodeContents(line);
+        return [range];
+      },
+    });
+
+    await search.setQuery("needle");
+    await search.setQuery("needle");
+
+    expect(warn).toHaveBeenCalledOnce();
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("::highlight(virtual-search-active)"),
+    );
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("<diff-viewer>"),
+    );
   });
 
   it("calls a virtual region reveal hook when the item is already mounted", async () => {

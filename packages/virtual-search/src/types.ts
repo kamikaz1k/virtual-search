@@ -92,8 +92,18 @@ export interface SearchState {
 
 export type SearchStateListener = (state: SearchState) => void;
 
+export interface VirtualSearchDiagnosticsOptions {
+  /**
+   * Warn when a range inside a shadow root does not appear to have visible
+   * `::highlight()` styles. The diagnostic never modifies the shadow root.
+   * @default true
+   */
+  missingHighlightStyles?: boolean;
+}
+
 export interface VirtualSearchOptions {
   root: Element | (() => Element | null);
+  diagnostics?: VirtualSearchDiagnosticsOptions;
   executor?: SearchExecutor;
   resetActiveMatchOnOpen?: boolean;
   searchOptions?: SearchOptions;

@@ -18,6 +18,7 @@ const VirtualSearchContext = createContext<VirtualSearchController | null>(null)
 
 export interface VirtualSearchProviderProps extends PropsWithChildren {
   rootRef: RefObject<Element | null>;
+  diagnostics?: VirtualSearchOptions["diagnostics"];
   executor?: VirtualSearchOptions["executor"];
   resetActiveMatchOnOpen?: boolean;
   searchOptions?: VirtualSearchOptions["searchOptions"];
@@ -27,6 +28,7 @@ export interface VirtualSearchProviderProps extends PropsWithChildren {
 export function VirtualSearchProvider({
   children,
   rootRef,
+  diagnostics,
   executor,
   resetActiveMatchOnOpen,
   searchOptions,
@@ -38,6 +40,7 @@ export function VirtualSearchProvider({
   if (!controllerRef.current) {
     controllerRef.current = createVirtualSearch({
       root: () => rootRef.current,
+      ...(diagnostics ? { diagnostics } : {}),
       ...(executor ? { executor } : {}),
       ...(resetActiveMatchOnOpen === undefined
         ? {}

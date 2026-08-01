@@ -31,13 +31,6 @@ const codeViewSearchStyles = `
     text-underline-offset: 2px;
   }
 
-  ::highlight(diff-demo-active) {
-    color: #f8fafc;
-    background-color: color-mix(in srgb, #ffb224 72%, #7c2d12);
-    text-decoration: underline 2px #ffd978;
-    text-underline-offset: 2px;
-  }
-
   [data-diffs-header="default"] {
     border-block: 1px solid #253042;
   }
