@@ -1,11 +1,42 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import {
+  useVirtualSearchController,
   useVirtualSearchRegion,
   type VirtualSearchRegionBinding,
 } from "virtual-search/react";
 import { tanstackVirtualAdapter } from "virtual-search/tanstack";
 import type { Customer, Order } from "./data";
+
+function useMediaQuery(query: string, fallback: boolean) {
+  const [matches, setMatches] = useState(() =>
+    typeof globalThis.matchMedia === "function"
+      ? globalThis.matchMedia(query).matches
+      : fallback
+  );
+
+  useEffect(() => {
+    if (typeof globalThis.matchMedia !== "function") return;
+    const mediaQuery = globalThis.matchMedia(query);
+    const update = () => setMatches(mediaQuery.matches);
+    update();
+    mediaQuery.addEventListener("change", update);
+    return () => mediaQuery.removeEventListener("change", update);
+  }, [query]);
+
+  return matches;
+}
+
+function useDesktopSearchParts(regionId: string) {
+  const searchController = useVirtualSearchController();
+  const enabled = useMediaQuery("(min-width: 761px)", true);
+
+  useEffect(() => {
+    void searchController.invalidate(regionId);
+  }, [enabled, regionId, searchController]);
+
+  return enabled;
+}
 
 interface ListShellProps {
   eyebrow: string;
@@ -94,6 +125,8 @@ function VirtualSurface<Item>({
 }
 
 export function CustomerList({ items }: { items: readonly Customer[] }) {
+  const showEmail = useDesktopSearchParts("customers");
+
   return (
     <ListShell eyebrow="Registry A" title="Customer directory" count={items.length}>
       <VirtualSurface
@@ -103,7 +136,9 @@ export function CustomerList({ items }: { items: readonly Customer[] }) {
         getKey={customer => customer.id}
         getSearchParts={customer => [
           { id: "name", text: customer.name },
-          { id: "email", text: customer.email },
+          ...(showEmail
+            ? [{ id: "email", text: customer.email }]
+            : []),
           { id: "city", text: customer.city },
         ]}
         renderRow={(customer, search) => (
@@ -131,6 +166,8 @@ export function CustomerList({ items }: { items: readonly Customer[] }) {
 }
 
 export function OrderList({ items }: { items: readonly Order[] }) {
+  const showStatus = useDesktopSearchParts("orders");
+
   return (
     <ListShell eyebrow="Registry B" title="Order ledger" count={items.length}>
       <VirtualSurface
@@ -141,7 +178,9 @@ export function OrderList({ items }: { items: readonly Order[] }) {
         getSearchParts={order => [
           { id: "reference", text: order.reference },
           { id: "customer", text: order.customer },
-          { id: "status", text: order.status },
+          ...(showStatus
+            ? [{ id: "status", text: order.status }]
+            : []),
           { id: "total", text: order.total },
         ]}
         renderRow={(order, search) => (

@@ -1,6 +1,7 @@
 import { buildCorpus, occurrenceIdentity, type PreparedCorpus } from "./corpus";
 import { createMainThreadExecutor } from "./executors/main-thread";
 import { SearchHighlighter } from "./highlighter";
+import { VirtualSearchRevealError } from "./types";
 import type {
   SearchOccurrence,
   SearchState,
@@ -25,6 +26,45 @@ function sameOccurrence(a: SearchOccurrence, b: SearchOccurrence): boolean {
     && a.partId === b.partId
     && a.start === b.start
     && a.end === b.end;
+}
+
+function isRangeVisible(range: Range, root: Element): boolean {
+  const matchedElement = range.startContainer instanceof Element
+    ? range.startContainer
+    : range.startContainer.parentElement;
+  if (!matchedElement) return false;
+
+  for (
+    let element: Element | null = matchedElement;
+    element;
+    element = element.parentElement
+  ) {
+    if (
+      element.hasAttribute("hidden")
+      || element.hasAttribute("inert")
+    ) {
+      return false;
+    }
+
+    const computedStyle = element.ownerDocument.defaultView
+      ?.getComputedStyle(element);
+    if (
+      computedStyle?.display === "none"
+      || computedStyle?.visibility === "hidden"
+      || computedStyle?.contentVisibility === "hidden"
+    ) {
+      return false;
+    }
+
+    if (element.tagName === "DETAILS" && !element.hasAttribute("open")) {
+      const summary = element.querySelector(":scope > summary");
+      if (!summary?.contains(matchedElement)) return false;
+    }
+
+    if (element === root) break;
+  }
+
+  return root.contains(matchedElement);
 }
 
 export function createVirtualSearch(
@@ -74,10 +114,19 @@ export function createVirtualSearch(
     mutationObserver?.disconnect();
     observedRoot = searchRoot;
     mutationObserver = new MutationObserver(mutations => {
+      const relevantMutations = mutations.filter(mutation => !(
+        mutation.type === "attributes"
+        && mutation.attributeName === "hidden"
+        && mutation.oldValue === "until-found"
+        && mutation.target instanceof Element
+        && !mutation.target.hasAttribute("hidden")
+      ));
+
       if (
         disposed
         || state.query.length === 0
-        || mutations.every(mutationIsInsideVirtualRegion)
+        || relevantMutations.length === 0
+        || relevantMutations.every(mutationIsInsideVirtualRegion)
         || mutationRefreshQueued
       ) {
         return;
@@ -97,6 +146,7 @@ export function createVirtualSearch(
       childList: true,
       characterData: true,
       attributes: true,
+      attributeOldValue: true,
       attributeFilter: ["hidden", "inert", "style", "class"],
     });
   };
@@ -150,13 +200,22 @@ export function createVirtualSearch(
       if (!document) return;
 
       const rendered = await document.reveal(occurrence, abort.signal);
-      if (abort.signal.aborted || !rendered) return;
+      if (abort.signal.aborted) return;
+      if (!rendered) throw new VirtualSearchRevealError(occurrence);
 
       const activeRanges = await document.locateMounted(
         occurrence,
         abort.signal,
       );
       if (abort.signal.aborted) return;
+      const searchRoot = root();
+      if (
+        !searchRoot
+        || activeRanges.length === 0
+        || activeRanges.some(range => !isRangeVisible(range, searchRoot))
+      ) {
+        throw new VirtualSearchRevealError(occurrence);
+      }
 
       const passiveMatches = state.matches.filter((_, matchIndex) =>
         matchIndex !== index

@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { act, cleanup, render } from "@testing-library/react";
+import { act, cleanup, render, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   useVirtualSearchController,
@@ -89,5 +89,57 @@ describe("SearchPanel visual viewport behavior", () => {
     expect(panel.style.getPropertyValue("--virtual-search-viewport-height"))
       .toBe("300px");
     expect(panel.style.translate).toBe("0px 98px");
+  });
+
+  it("rechecks the panel position when the document scrolls", async () => {
+    const viewport = Object.assign(new EventTarget(), {
+      height: 300,
+      offsetLeft: 0,
+      offsetTop: 100,
+      width: 320,
+    });
+    Object.defineProperty(globalThis, "visualViewport", {
+      configurable: true,
+      value: viewport,
+    });
+    const style = document.createElement("style");
+    style.dataset.viewportTestStyle = "";
+    style.textContent = ".fixed-panel { position: fixed; }";
+    document.head.append(style);
+
+    let panelTop = 10;
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect")
+      .mockImplementation(() => ({
+        x: 10,
+        y: panelTop,
+        top: panelTop,
+        right: 310,
+        bottom: panelTop + 120,
+        left: 10,
+        width: 300,
+        height: 120,
+        toJSON: () => ({}),
+      }));
+
+    let controller: VirtualSearchController | undefined;
+    const rendered = render(
+      <TestProvider
+        onController={value => {
+          controller = value;
+        }}
+      />,
+    );
+
+    await act(async () => {
+      controller?.open();
+    });
+
+    const panel = rendered.getByRole("search");
+    expect(panel.style.translate).toBe("0px 98px");
+
+    panelTop = 350;
+    act(() => globalThis.dispatchEvent(new Event("scroll")));
+
+    await waitFor(() => expect(panel.style.translate).toBe("0px -78px"));
   });
 });

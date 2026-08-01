@@ -134,11 +134,18 @@ export function useSearchPanelViewport<ElementType extends HTMLElement>(
     sync();
     viewport.addEventListener("resize", scheduleSync);
     viewport.addEventListener("scroll", scheduleSync);
+    globalThis.addEventListener("scroll", scheduleSync, { passive: true });
+    const resizeObserver = typeof ResizeObserver === "undefined"
+      ? undefined
+      : new ResizeObserver(scheduleSync);
+    resizeObserver?.observe(panel);
 
     return () => {
       if (frame !== 0) cancelAnimationFrame(frame);
       viewport.removeEventListener("resize", scheduleSync);
       viewport.removeEventListener("scroll", scheduleSync);
+      globalThis.removeEventListener("scroll", scheduleSync);
+      resizeObserver?.disconnect();
       restoreProperties(style, originalManaged);
       restoreProperties(style, originalViewport);
     };

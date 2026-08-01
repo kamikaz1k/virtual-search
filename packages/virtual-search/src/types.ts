@@ -32,6 +32,19 @@ export interface SearchOccurrence {
   occurrence: number;
 }
 
+export class VirtualSearchRevealError extends Error {
+  readonly occurrence: SearchOccurrence;
+
+  constructor(occurrence: SearchOccurrence) {
+    super(
+      `Search match could not be revealed: region "${occurrence.regionId}", `
+      + `unit "${occurrence.unitKey}", part "${occurrence.partId}"`,
+    );
+    this.name = "VirtualSearchRevealError";
+    this.occurrence = occurrence;
+  }
+}
+
 export interface SearchExecutor {
   search(
     documents: readonly SearchDocument[],

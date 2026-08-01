@@ -37,6 +37,12 @@ independent virtualized lists, with a toggle for a 100,000-record stress
 dataset. Search for `Alice`, or enable 100K and search for
 `alice.chen.39999@example.test` to reveal the final customer.
 
+The revealable-content specimens exercise ordinary DOM semantics as well:
+search for `Orchid Protocol` to open a closed `<details>` element, or
+`Cobalt Archive` to reveal content marked `hidden="until-found"`. The visible
+phrase controls are form inputs, so they are not duplicate matches in the page
+corpus.
+
 ## React setup
 
 Install one provider around the page's searchable root:
@@ -147,10 +153,10 @@ The hook also publishes
 `--virtual-search-viewport-top`,
 `--virtual-search-viewport-left`,
 `--virtual-search-viewport-width`, and
-`--virtual-search-viewport-height` on the panel. Custom fixed-position styles
-can use these values with safe-area insets; the hook still applies a final
-overflow and position guard when the panel would otherwise leave the visible
-viewport.
+`--virtual-search-viewport-height` on the panel for advanced layouts. Prefer
+ordinary fixed-position anchors such as `bottom` and `right`; the hook applies
+the viewport correction, rechecks it during document scrolling, and constrains
+oversized panels when the keyboard leaves less usable space.
 
 ## Native-like UX details
 
@@ -170,6 +176,7 @@ implementation:
 | Result counts use an ARIA live region and searching uses `aria-busy` | Assistive technology receives the same progress and `X of Y` feedback as sighted users | Search UI |
 | CSS Custom Highlight ranges avoid inserting `<mark>` elements | Highlighting does not mutate or fight framework-owned DOM | Core highlighter |
 | The search panel follows the browser's visual viewport | When the software keyboard opens or result navigation pans the page, fixed search controls remain visible instead of being stranded outside the usable viewport | React `SearchPanel` and `useSearchPanelViewport()` |
+| The mobile demo anchors search to the bottom and removes decorative chrome | The panel stays in thumb reach without obscuring more searchable content than necessary | Demo custom UI |
 | Safe-area insets and `viewport-fit=cover` are respected | The panel avoids notches and rounded screen edges without disabling pinch zoom | Demo custom UI |
 | Mobile input text remains at least 16px and touch controls are enlarged | Focusing search does not trigger iOS text-field zoom, and navigation remains comfortable by touch | Demo custom UI |
 | Extremely short viewports make the panel internally scrollable | Landscape phones and keyboard-constrained layouts keep every search action reachable | Demo custom UI |
@@ -179,6 +186,53 @@ The built-in `SearchPanel` applies the viewport guard automatically. The
 the exported hook with application-owned
 [responsive styles](apps/demo/src/styles.css). The library intentionally does
 not disable `user-scalable` or set a restrictive maximum zoom.
+
+## Considerations
+
+### Responsive and otherwise invisible content
+
+Native Find searches the page as it exists in the current presentation.
+Content removed from the DOM or hidden with `display: none`, `visibility:
+hidden`, the regular `hidden` attribute, or `content-visibility: hidden` is not
+normally a result. Content skipped by virtualization is different: although it
+is not currently mounted, it represents content that would be visible after
+scrolling to its row and should remain searchable.
+
+Keep a virtual region's authoritative search parts aligned with the current
+responsive layout. For example, if a mobile breakpoint removes an email
+column, omit the email part from `getSearchParts` at that breakpoint and call
+`invalidate(regionId)` when the breakpoint changes. This prevents invisible
+navigation steps and keeps the `X of Y` count truthful. Visually hidden or
+off-screen techniques that leave content rendered may still be searchable,
+just as they may be with native Find.
+
+### Content that Find is expected to reveal
+
+Browsers have special Find behavior for revealable content. A native search
+can open a closed `<details>` element, and `hidden="until-found"` is designed
+to reveal itself through the browser's ancestor-revealing algorithm and
+`beforematch` event.
+
+Virtual Search reproduces these two ordinary-DOM behaviors. Selecting a match
+opens each closed `<details>` ancestor. For `hidden="until-found"`, it
+dispatches `beforematch`, removes the `hidden` attribute, and then highlights
+and scrolls to the text. The dispatched event follows the native ordering but
+is synthetic, so its `isTrusted` property is `false`.
+
+Application-owned tabs, accordions, and collapsed panels should reveal
+themselves through the virtual region's existing `reveal(occurrence, context)`
+hook. The hook runs for every active virtual match, including rows that are
+already mounted, and receives the matching `partId` on the occurrence. Resolve
+it only after the matching content is rendered. If the hook returns but the
+matching range is still absent or hidden, navigation reports a
+`VirtualSearchRevealError` instead of silently displaying an invisible active
+result.
+
+This keeps one navigation extension point, but makes its contract broader:
+`reveal` is responsible for any mounting, scrolling, tab selection, or
+expansion required to expose the occurrence. Existing integrations whose
+custom `reveal` implementation assumed it would only run for unmounted rows
+should make that operation idempotent.
 
 ## Registering a TanStack Virtual list
 

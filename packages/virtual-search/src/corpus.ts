@@ -59,7 +59,13 @@ export function occurrenceIdentity(
 
 function isExcluded(element: Element): boolean {
   if (excludedTags.has(element.tagName)) return true;
-  if (element.hasAttribute("hidden") || element.hasAttribute("inert")) return true;
+  const hiddenUntilFound = element.getAttribute("hidden") === "until-found";
+  if (
+    (element.hasAttribute("hidden") && !hiddenUntilFound)
+    || element.hasAttribute("inert")
+  ) {
+    return true;
+  }
 
   const style = (element as HTMLElement).style;
   if (style?.display === "none" || style?.visibility === "hidden") return true;
@@ -67,9 +73,12 @@ function isExcluded(element: Element): boolean {
   const computedStyle = element.ownerDocument.defaultView
     ?.getComputedStyle(element);
   if (
-    computedStyle?.display === "none"
+    (computedStyle?.display === "none" && !hiddenUntilFound)
     || computedStyle?.visibility === "hidden"
-    || computedStyle?.contentVisibility === "hidden"
+    || (
+      computedStyle?.contentVisibility === "hidden"
+      && !hiddenUntilFound
+    )
   ) {
     return true;
   }
@@ -134,9 +143,6 @@ function createVirtualDocument(
     documentOrder,
     parts: unit.parts,
     async reveal(occurrence, signal) {
-      const mounted = findRenderedItem(region, unit.key);
-      if (mounted) return mounted;
-
       return region.reveal(occurrence, {
         signal,
         align: "center",
@@ -161,8 +167,51 @@ function createDomDocument(
     unitOrder: segment,
     documentOrder,
     parts: [{ id: "text", text: map.text }],
-    async reveal() {
-      return map.spans[0]?.node.parentElement ?? null;
+    async reveal(occurrence, signal) {
+      const range = createRangeFromTextMap(
+        map,
+        occurrence.start,
+        occurrence.end,
+      );
+      if (!range) return null;
+
+      const matchedElement = range.startContainer instanceof Element
+        ? range.startContainer
+        : range.startContainer.parentElement;
+      if (!matchedElement) return null;
+
+      const ancestors: Element[] = [];
+      for (
+        let ancestor: Element | null = matchedElement;
+        ancestor;
+        ancestor = ancestor.parentElement
+      ) {
+        ancestors.push(ancestor);
+      }
+
+      for (const ancestor of ancestors.reverse()) {
+        if (signal.aborted) return null;
+
+        if (
+          ancestor.tagName === "DETAILS"
+          && !ancestor.hasAttribute("open")
+        ) {
+          const summary = ancestor.querySelector(":scope > summary");
+          if (!summary?.contains(matchedElement)) {
+            ancestor.setAttribute("open", "");
+          }
+        }
+
+        if (ancestor.getAttribute("hidden") === "until-found") {
+          const EventConstructor = ancestor.ownerDocument.defaultView?.Event
+            ?? Event;
+          ancestor.dispatchEvent(new EventConstructor("beforematch"));
+          if (signal.aborted) return null;
+          ancestor.removeAttribute("hidden");
+        }
+      }
+
+      return matchedElement;
     },
     async locateMounted(occurrence) {
       const range = createRangeFromTextMap(map, occurrence.start, occurrence.end);

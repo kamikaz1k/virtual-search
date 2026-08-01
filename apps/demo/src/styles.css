@@ -57,6 +57,17 @@ main {
   color: var(--paper);
 }
 
+.demo-loading {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  background: #080d14;
+  color: #8290a6;
+  font: 500 11px/1 "DM Mono", monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .hero {
   min-height: 86vh;
   display: grid;
@@ -76,6 +87,16 @@ main {
   font: 500 11px/1 "DM Mono", monospace;
   letter-spacing: 0.11em;
   text-transform: uppercase;
+}
+
+.demo-route-link {
+  color: var(--signal);
+  text-decoration: none;
+}
+
+.demo-route-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .dataset-toggle {
@@ -483,6 +504,205 @@ h2 {
   line-height: 1.03;
 }
 
+.reveal-lab {
+  padding: 82px 0;
+  border-bottom: 1px solid var(--ink);
+}
+
+.reveal-lab-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.55fr);
+  align-items: end;
+  gap: 48px;
+  margin-bottom: 28px;
+}
+
+.reveal-lab-heading p {
+  max-width: 430px;
+  justify-self: end;
+  font: 400 13px/1.6 "DM Mono", monospace;
+}
+
+.reveal-lab-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border: 1px solid var(--ink);
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.reveal-specimen {
+  min-width: 0;
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+}
+
+.reveal-specimen + .reveal-specimen {
+  border-left: 1px solid var(--ink);
+}
+
+.reveal-specimen-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 42px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--ink);
+  color: var(--signal);
+  font: 500 10px/1 "DM Mono", monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.reveal-specimen-meta code {
+  color: var(--ink);
+  font: inherit;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.reveal-search-term {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  min-height: 76px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--ink);
+  font: 500 10px/1.2 "DM Mono", monospace;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.reveal-search-term input {
+  min-width: 0;
+  width: 100%;
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  padding: 10px 14px;
+  outline: 0;
+  background: var(--paper);
+  color: var(--ink);
+  cursor: text;
+  font: 500 12px/1 "DM Mono", monospace;
+  text-transform: none;
+}
+
+.reveal-search-term input:focus-visible {
+  outline: 3px solid var(--acid);
+  outline-offset: 2px;
+}
+
+.reveal-details {
+  align-self: stretch;
+  background: var(--acid);
+}
+
+.reveal-details summary {
+  min-height: 128px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 24px;
+  cursor: pointer;
+  list-style: none;
+  font-size: clamp(25px, 3vw, 42px);
+  line-height: 1;
+}
+
+.reveal-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.reveal-details-state {
+  flex: 0 0 auto;
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--ink);
+  border-radius: 50%;
+  transition: transform 180ms ease, background 180ms ease;
+}
+
+.reveal-details-state::before,
+.reveal-details-state::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 14px;
+  height: 1px;
+  background: var(--ink);
+  transform: translate(-50%, -50%);
+}
+
+.reveal-details-state::after {
+  transform: translate(-50%, -50%) rotate(90deg);
+}
+
+.reveal-details[open] .reveal-details-state {
+  background: var(--ink);
+  transform: rotate(45deg);
+}
+
+.reveal-details[open] .reveal-details-state::before,
+.reveal-details[open] .reveal-details-state::after {
+  background: var(--acid);
+}
+
+.reveal-details-body {
+  padding: 0 24px 28px;
+}
+
+.reveal-details-body p,
+.reveal-until-found-content p {
+  max-width: 520px;
+  font-size: clamp(19px, 2vw, 25px);
+  line-height: 1.2;
+}
+
+.reveal-until-found-stage {
+  min-height: 128px;
+  display: grid;
+  align-items: stretch;
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      transparent 0 9px,
+      rgba(23, 24, 16, 0.06) 9px 10px
+    );
+}
+
+.reveal-until-found-placeholder,
+.reveal-until-found-content {
+  grid-area: 1 / 1;
+  padding: 24px;
+}
+
+.reveal-until-found-placeholder {
+  max-width: 380px;
+  color: rgba(23, 24, 16, 0.58);
+  font: 500 11px/1.55 "DM Mono", monospace;
+  text-transform: uppercase;
+}
+
+.reveal-until-found-content {
+  position: relative;
+  z-index: 1;
+  background: var(--signal);
+  color: var(--paper);
+}
+
+.reveal-until-found-content[hidden="until-found"] {
+  background: transparent;
+  color: transparent;
+  pointer-events: none;
+}
+
+.reveal-until-found-content code {
+  font: 500 0.72em/1 "DM Mono", monospace;
+}
+
 footer {
   display: flex;
   justify-content: space-between;
@@ -516,50 +736,53 @@ footer {
   }
 
   .command-search {
-    top: calc(
-      var(--virtual-search-viewport-top, 0px)
-      + max(10px, env(safe-area-inset-top))
-    );
-    right: auto;
-    left: calc(
-      var(--virtual-search-viewport-left, 0px)
-      + max(10px, env(safe-area-inset-left))
-    );
-    width: calc(
-      var(--virtual-search-viewport-width, 100vw)
-      - max(
-        20px,
-        calc(env(safe-area-inset-left) + env(safe-area-inset-right))
-      )
-    );
-    max-height: calc(
-      var(--virtual-search-viewport-height, 100dvh)
-      - max(
-        20px,
-        calc(env(safe-area-inset-top) + env(safe-area-inset-bottom))
-      )
-    );
+    inset: auto max(10px, env(safe-area-inset-right))
+      max(10px, env(safe-area-inset-bottom))
+      max(10px, env(safe-area-inset-left));
+    width: auto;
+    max-height: calc(100dvh - 20px);
     overflow: auto;
     overscroll-behavior: contain;
-    box-shadow: 5px 5px 0 var(--ink);
+    box-shadow: 4px 4px 0 var(--ink);
   }
 
   .command-search-heading {
-    min-height: 44px;
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    right: 0;
+    min-height: 56px;
+    padding: 0;
+    border-bottom: 0;
+    pointer-events: none;
+  }
+
+  .command-search-close {
+    height: 56px;
+    padding: 0 13px;
+    background: var(--paper);
+    pointer-events: auto;
+  }
+
+  .command-search-close kbd,
+  .command-search-kicker,
+  .command-search-glyph {
+    display: none;
   }
 
   .command-search-entry {
-    grid-template-columns: 42px 1fr;
+    grid-template-columns: 1fr;
   }
 
   .command-search input {
-    height: 62px;
-    padding: 0 12px;
-    font-size: 19px;
+    height: 56px;
+    padding: 0 80px 0 14px;
+    font-size: 18px;
   }
 
   .command-search-meta {
     grid-template-columns: 1fr auto;
+    min-height: 44px;
   }
 
   .command-search progress {
@@ -567,11 +790,8 @@ footer {
   }
 
   .command-search-actions button {
-    min-width: 58px;
-  }
-
-  .command-search-kicker {
-    max-width: 180px;
+    min-width: 56px;
+    min-height: 44px;
   }
 
   .virtual-row {
@@ -587,6 +807,28 @@ footer {
   .field-note {
     grid-template-columns: 1fr;
     padding: 36px 24px;
+  }
+
+  .reveal-lab-heading,
+  .reveal-lab-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .reveal-lab-heading {
+    gap: 20px;
+  }
+
+  .reveal-lab-heading p {
+    justify-self: start;
+  }
+
+  .reveal-specimen + .reveal-specimen {
+    border-top: 1px solid var(--ink);
+    border-left: 0;
+  }
+
+  .reveal-search-term {
+    grid-template-columns: 1fr;
   }
 
   footer {

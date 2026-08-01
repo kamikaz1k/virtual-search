@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createVirtualSearch } from "../src/controller";
-import type { VirtualSearchRegion } from "../src/types";
+import {
+  VirtualSearchRevealError,
+  type VirtualSearchRegion,
+} from "../src/types";
 
 beforeEach(() => {
   document.body.innerHTML = "";
@@ -153,6 +156,127 @@ describe("createVirtualSearch", () => {
     expect(search.getState().matches).toHaveLength(1);
     expect(reveal).toHaveBeenCalledOnce();
     expect(search.getState().status).toBe("ready");
+  });
+
+  it("calls a virtual region reveal hook when the item is already mounted", async () => {
+    document.body.innerHTML = `
+      <main>
+        <div id="list">
+          <div data-virtual-search-item="mounted">Needle</div>
+        </div>
+      </main>
+    `;
+    const root = document.querySelector("main")!;
+    const anchor = document.querySelector("#list")!;
+    const item = document.querySelector("[data-virtual-search-item]")!;
+    const reveal = vi.fn(() => item);
+
+    const search = createVirtualSearch({ root });
+    search.registerRegion({
+      id: "list",
+      anchor: () => anchor,
+      getUnits: () => [{
+        key: "mounted",
+        parts: [{ id: "text", text: "Needle" }],
+      }],
+      reveal,
+    });
+
+    await search.setQuery("needle");
+
+    expect(reveal).toHaveBeenCalledOnce();
+    expect(search.getState().status).toBe("ready");
+  });
+
+  it("opens closed details before highlighting a DOM match", async () => {
+    document.body.innerHTML = `
+      <main>
+        <details>
+          <summary>More</summary>
+          <p>Revealable needle</p>
+        </details>
+      </main>
+    `;
+    const root = document.querySelector("main")!;
+    const details = document.querySelector("details")!;
+    const search = createVirtualSearch({ root });
+
+    await search.setQuery("needle");
+
+    expect(search.getState().matches).toHaveLength(1);
+    expect(details.open).toBe(true);
+    expect(search.getState().status).toBe("ready");
+  });
+
+  it("reveals hidden-until-found DOM content in native event order", async () => {
+    document.body.innerHTML = `
+      <main>
+        <section hidden="until-found">Revealable needle</section>
+      </main>
+    `;
+    const root = document.querySelector("main")!;
+    const section = document.querySelector("section")!;
+    const revealOrder: string[] = [];
+    section.addEventListener("beforematch", () => {
+      revealOrder.push(
+        section.getAttribute("hidden") === "until-found"
+          ? "event-before-removal"
+          : "event-after-removal",
+      );
+    });
+    const search = createVirtualSearch({ root });
+
+    await search.setQuery("needle");
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(search.getState().matches).toHaveLength(1);
+    expect(revealOrder).toEqual(["event-before-removal"]);
+    expect(section.hasAttribute("hidden")).toBe(false);
+    expect(search.getState().status).toBe("ready");
+  });
+
+  it("keeps regular hidden DOM content out of the corpus", async () => {
+    document.body.innerHTML = `
+      <main>
+        <p hidden>Invisible needle</p>
+      </main>
+    `;
+    const root = document.querySelector("main")!;
+    const search = createVirtualSearch({ root });
+
+    await search.setQuery("needle");
+
+    expect(search.getState().matches).toHaveLength(0);
+  });
+
+  it("reports a typed error when a region does not reveal its match", async () => {
+    document.body.innerHTML = `
+      <main>
+        <div id="list">
+          <div data-virtual-search-item="mounted" style="display: none">
+            Needle
+          </div>
+        </div>
+      </main>
+    `;
+    const root = document.querySelector("main")!;
+    const anchor = document.querySelector("#list")!;
+    const item = document.querySelector("[data-virtual-search-item]")!;
+    const search = createVirtualSearch({ root });
+    search.registerRegion({
+      id: "list",
+      anchor: () => anchor,
+      getUnits: () => [{
+        key: "mounted",
+        parts: [{ id: "text", text: "Needle" }],
+      }],
+      reveal: () => item,
+    });
+
+    await search.setQuery("needle");
+
+    expect(search.getState().status).toBe("error");
+    expect(search.getState().error).toBeInstanceOf(VirtualSearchRevealError);
   });
 
   it("ignores results from stale asynchronous queries", async () => {
