@@ -375,9 +375,6 @@ export function createVirtualSearch(
       if (!state.isOpen) focusBeforeOpen = document.activeElement;
       ensureMutationObserver();
       emit({ isOpen: true });
-      if (state.activeIndex !== -1) {
-        void goTo(options.resetActiveMatchOnOpen ? 0 : state.activeIndex);
-      }
     },
     close() {
       navigationAbort?.abort();

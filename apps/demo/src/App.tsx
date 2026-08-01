@@ -160,7 +160,6 @@ function RecordsDemo() {
     <VirtualSearchProvider
       rootRef={rootRef}
       executor={searchExecutor}
-      resetActiveMatchOnOpen
     >
       <SearchControls />
 

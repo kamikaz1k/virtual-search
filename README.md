@@ -63,7 +63,7 @@ function App() {
   const rootRef = useRef<HTMLElement>(null);
 
   return (
-    <VirtualSearchProvider rootRef={rootRef} resetActiveMatchOnOpen>
+    <VirtualSearchProvider rootRef={rootRef}>
       <SearchControls />
       <main ref={rootRef}>
         <p>Ordinary DOM remains searchable.</p>
@@ -78,9 +78,9 @@ function App() {
 `SearchPanel` is optional. `useVirtualSearch()` exposes headless state and
 `open`, `close`, `setQuery`, `next`, `previous`, and `goTo` commands.
 
-`resetActiveMatchOnOpen` keeps the current query but returns to its first
-occurrence whenever search reopens. This mirrors the native restart behavior
-while remaining opt-in; omit the prop to preserve the active `N of Y` position.
+Opening or refocusing the panel never moves the page. Navigation happens only
+when the query changes or the user requests the next or previous match, which
+matches browser find behavior.
 
 ## Custom search UI
 
@@ -173,7 +173,7 @@ implementation:
 | Detail | Why it matters | Responsibility |
 | --- | --- | --- |
 | The first result is the first occurrence in document order | Opening a new query starts where users expect native Find to start, even when that occurrence is inside an unmounted row | Core |
-| Search can restart from the first match when reopened | `resetActiveMatchOnOpen` keeps the query but avoids returning users to a stale `N of Y` position | Core and React provider |
+| Opening or refocusing find does not move the page | Cmd/Ctrl+F only opens and focuses the panel; query edits and explicit next/previous actions navigate | Core and React provider |
 | Next and previous wrap across page boundaries | Navigation continues naturally from the last match to the first and back again | Core |
 | Virtual rows mount before range lookup and scrolling | Search can reveal exact text in records that did not exist in the DOM when the query ran | Core and virtualizer adapter |
 | Navigation waits for rendering and measurement to settle | Dynamic row sizing does not leave the active highlight or scroll position slightly displaced | React region binding |

@@ -199,7 +199,6 @@ export function DiffDemo() {
   return (
     <VirtualSearchProvider
       rootRef={scrollRef}
-      resetActiveMatchOnOpen
       scrollMargin={80}
     >
       <div className="diff-demo">

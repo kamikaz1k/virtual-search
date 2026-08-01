@@ -20,6 +20,7 @@ export interface VirtualSearchProviderProps extends PropsWithChildren {
   rootRef: RefObject<Element | null>;
   diagnostics?: VirtualSearchOptions["diagnostics"];
   executor?: VirtualSearchOptions["executor"];
+  /** @deprecated Opening the find panel no longer navigates. */
   resetActiveMatchOnOpen?: boolean;
   searchOptions?: VirtualSearchOptions["searchOptions"];
   scrollMargin?: number;

@@ -9,9 +9,8 @@ and records that are not currently mounted by virtualized lists.
 - Matching is literal, case-insensitive, NFC-normalized, and occurrence-based.
 - Match offsets use UTF-16 code units.
 - A new query selects the first match in document order.
-- Reopening search preserves the active occurrence by default.
-- `resetActiveMatchOnOpen` optionally restarts reopening at the first
-  occurrence while preserving the query.
+- Opening, reopening, or refocusing search preserves the active occurrence
+  without navigating or scrolling.
 - Next and previous navigation wrap at the document boundaries.
 - Registered virtual regions occupy the position of their anchor element.
 - Units inside a virtual region use the application's current item order.

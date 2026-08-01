@@ -85,7 +85,7 @@ describe("createVirtualSearch", () => {
     expect(search.getState().activeIndex).toBe(0);
   });
 
-  it("can restart at the first match when search reopens", async () => {
+  it("does not navigate when search reopens", async () => {
     document.body.innerHTML = `
       <main id="root">
         <p>Needle one</p>
@@ -102,6 +102,7 @@ describe("createVirtualSearch", () => {
     await search.setQuery("needle");
     await search.goTo(2);
     expect(search.getState().activeIndex).toBe(2);
+    vi.mocked(Element.prototype.scrollIntoView).mockClear();
 
     search.close();
     search.open();
@@ -109,10 +110,11 @@ describe("createVirtualSearch", () => {
     await Promise.resolve();
 
     expect(search.getState().query).toBe("needle");
-    expect(search.getState().activeIndex).toBe(0);
+    expect(search.getState().activeIndex).toBe(2);
+    expect(Element.prototype.scrollIntoView).not.toHaveBeenCalled();
   });
 
-  it("preserves the active match on reopen by default", async () => {
+  it("does not navigate when opened while already open", async () => {
     document.body.innerHTML = `
       <main id="root">
         <p>Needle one</p>
@@ -124,12 +126,14 @@ describe("createVirtualSearch", () => {
 
     await search.setQuery("needle");
     await search.goTo(1);
-    search.close();
+    vi.mocked(Element.prototype.scrollIntoView).mockClear();
+
     search.open();
     await Promise.resolve();
     await Promise.resolve();
 
     expect(search.getState().activeIndex).toBe(1);
+    expect(Element.prototype.scrollIntoView).not.toHaveBeenCalled();
   });
 
   it("reveals an unmounted virtual item before locating it", async () => {

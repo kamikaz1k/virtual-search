@@ -105,6 +105,10 @@ export interface VirtualSearchOptions {
   root: Element | (() => Element | null);
   diagnostics?: VirtualSearchDiagnosticsOptions;
   executor?: SearchExecutor;
+  /**
+   * @deprecated Opening the find panel no longer navigates or resets the
+   * active match. Change the query or call a navigation method instead.
+   */
   resetActiveMatchOnOpen?: boolean;
   searchOptions?: SearchOptions;
   scrollMargin?: number;
