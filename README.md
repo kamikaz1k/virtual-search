@@ -206,6 +206,37 @@ Ongoing iOS keyboard and visual-viewport research, failed approaches, device
 reproductions, and the validation matrix live in
 [VIEWPORT_RESEARCH.md](VIEWPORT_RESEARCH.md).
 
+### Text input value highlighting
+
+Virtual Search currently excludes values rendered inside text-like `<input>`
+elements and `<textarea>` elements. Their live `.value` is not a DOM text node,
+so it cannot be addressed by the `Range` objects used for ordinary CSS Custom
+Highlights. Native Find can paint those substrings through browser-internal
+control rendering APIs that page JavaScript cannot access.
+
+Planned support will make these values searchable and navigable while keeping
+exact substring painting explicitly opt-in. The proposed option is named
+`inputValueHighlighting` so it cannot be mistaken for ordinary DOM or virtual
+record highlighting:
+
+```ts
+createVirtualSearch({
+  root,
+  inputValueHighlighting: {
+    mode: "overlay",
+  },
+});
+```
+
+Overlay mode will use an inert, translucent mirror positioned over the matched
+substring without moving focus away from the Find field. It must account for
+control padding, fonts, direction, wrapping, and the control's internal scroll
+position. It will therefore remain opt-in until its correctness and cost have
+been validated across single-line inputs, multiline textareas, mobile zoom,
+RTL text, custom fonts, and heavily styled controls. Unsupported geometry can
+fall back to marking the whole control. Passwords and non-text controls will
+not be indexed.
+
 ### Responsive and otherwise invisible content
 
 Native Find searches the page as it exists in the current presentation.

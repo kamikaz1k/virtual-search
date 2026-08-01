@@ -56,3 +56,16 @@ never change selection, highlights, focus, or scroll position.
 - Cross-iframe, nested-region, or implicit shadow-root search.
 - Exact replication of every browser's whitespace and hidden-content rules.
 - Forcing every virtualized record to mount for passive highlighting.
+
+## Current limitation: text input values
+
+Live values inside text-like `<input>` and `<textarea>` controls are not part
+of the v1 corpus. Unlike ordinary page text, a control's `.value` cannot be
+targeted by a DOM `Range`, so CSS Custom Highlights cannot paint an exact
+substring inside it.
+
+A future opt-in API will be named `inputValueHighlighting` to make this scope
+explicit. Its `overlay` mode will mirror control layout in a non-interactive
+overlay while keeping focus in the Find field. Searching and navigation of
+eligible control values can become built-in independently; passwords and
+non-text controls remain excluded.
