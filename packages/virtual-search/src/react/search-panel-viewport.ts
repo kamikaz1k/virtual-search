@@ -120,16 +120,19 @@ export function useSearchPanelViewport<ElementType extends HTMLElement>(
       rect = panel.getBoundingClientRect();
       const minLeft = viewport.offsetLeft + inset;
       const maxRight = viewport.offsetLeft + viewport.width - inset;
-      const minTop = viewport.offsetTop + inset;
-      const maxBottom = viewport.offsetTop + viewport.height - inset;
       let x = 0;
       let y = 0;
 
       if (rect.left < minLeft) x = minLeft - rect.left;
       if (rect.right + x > maxRight) x += maxRight - (rect.right + x);
-      if (rect.top < minTop) y = minTop - rect.top;
-      if (rect.bottom + y > maxBottom) {
-        y += maxBottom - (rect.bottom + y);
+
+      if (anchor === "preserve") {
+        const minTop = viewport.offsetTop + inset;
+        const maxBottom = viewport.offsetTop + viewport.height - inset;
+        if (rect.top < minTop) y = minTop - rect.top;
+        if (rect.bottom + y > maxBottom) {
+          y += maxBottom - (rect.bottom + y);
+        }
       }
 
       if (x !== 0 || y !== 0) {
@@ -145,7 +148,9 @@ export function useSearchPanelViewport<ElementType extends HTMLElement>(
     sync();
     viewport.addEventListener("resize", scheduleSync);
     viewport.addEventListener("scroll", scheduleSync);
-    globalThis.addEventListener("scroll", scheduleSync, { passive: true });
+    if (anchor === "preserve") {
+      globalThis.addEventListener("scroll", scheduleSync, { passive: true });
+    }
     const resizeObserver = typeof ResizeObserver === "undefined"
       ? undefined
       : new ResizeObserver(scheduleSync);
@@ -155,7 +160,9 @@ export function useSearchPanelViewport<ElementType extends HTMLElement>(
       if (frame !== 0) cancelAnimationFrame(frame);
       viewport.removeEventListener("resize", scheduleSync);
       viewport.removeEventListener("scroll", scheduleSync);
-      globalThis.removeEventListener("scroll", scheduleSync);
+      if (anchor === "preserve") {
+        globalThis.removeEventListener("scroll", scheduleSync);
+      }
       resizeObserver?.disconnect();
       restoreProperties(style, originalManaged);
       restoreProperties(style, originalViewport);

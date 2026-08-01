@@ -6,6 +6,7 @@ import {
   VirtualSearchProvider,
 } from "../src/react/context";
 import { SearchPanel } from "../src/react/search-panel";
+import type { SearchPanelViewportAnchor } from "../src/react/search-panel-viewport";
 import type { VirtualSearchController } from "../src/types";
 
 afterEach(() => {
@@ -17,32 +18,44 @@ afterEach(() => {
 
 function PanelTestApp({
   onController,
+  viewportAnchor,
 }: {
   onController(controller: VirtualSearchController): void;
+  viewportAnchor?: SearchPanelViewportAnchor;
 }) {
   const controller = useVirtualSearchController();
   onController(controller);
 
-  return <SearchPanel className="fixed-panel" />;
+  return (
+    <SearchPanel
+      className="fixed-panel"
+      {...(viewportAnchor === undefined ? {} : { viewportAnchor })}
+    />
+  );
 }
 
 function TestProvider({
   onController,
+  viewportAnchor,
 }: {
   onController(controller: VirtualSearchController): void;
+  viewportAnchor?: SearchPanelViewportAnchor;
 }) {
   const rootRef = useRef<HTMLElement>(null);
 
   return (
     <VirtualSearchProvider rootRef={rootRef}>
-      <PanelTestApp onController={onController} />
+      <PanelTestApp
+        onController={onController}
+        {...(viewportAnchor === undefined ? {} : { viewportAnchor })}
+      />
       <main ref={rootRef} />
     </VirtualSearchProvider>
   );
 }
 
 describe("SearchPanel visual viewport behavior", () => {
-  it("keeps the built-in fixed panel inside the visual viewport", async () => {
+  it("does not translate a top-anchored panel during document scrolling", async () => {
     const viewport = Object.assign(new EventTarget(), {
       height: 300,
       offsetLeft: 0,
@@ -90,7 +103,13 @@ describe("SearchPanel visual viewport behavior", () => {
       .toBe("300px");
     expect(panel.style.top).toBe("max(8px, env(safe-area-inset-top))");
     expect(panel.style.bottom).toBe("auto");
-    expect(panel.style.translate).toBe("0px 98px");
+    expect(panel.style.translate).toBe("");
+
+    viewport.offsetTop = 240;
+    act(() => globalThis.dispatchEvent(new Event("scroll")));
+
+    await new Promise(resolve => requestAnimationFrame(resolve));
+    expect(panel.style.translate).toBe("");
   });
 
   it("rechecks the panel position when the document scrolls", async () => {
@@ -129,6 +148,7 @@ describe("SearchPanel visual viewport behavior", () => {
         onController={value => {
           controller = value;
         }}
+        viewportAnchor="preserve"
       />,
     );
 

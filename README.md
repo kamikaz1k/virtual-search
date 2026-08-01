@@ -159,8 +159,10 @@ The hook also publishes
 `--virtual-search-viewport-height` on the panel for advanced layouts. Prefer
 ordinary fixed-position anchors. A top anchor is the most reliable mobile
 choice because the software keyboard changes the bottom edge of the visual
-viewport; the hook applies a defensive viewport correction and constrains
-oversized panels when less usable space remains.
+viewport. In `"top"` mode, CSS remains the sole owner of the panel's vertical
+position so document scrolling cannot translate it away from the viewport.
+`"preserve"` mode keeps the defensive vertical correction for application-owned
+anchors. Both modes constrain oversized panels when less usable space remains.
 
 ## Native-like UX details
 
@@ -179,7 +181,7 @@ implementation:
 | Escape closes search and restores the previously focused element | Keyboard users return to the control they were using before opening Find | Core and React shortcut binding |
 | Result counts use an ARIA live region and searching uses `aria-busy` | Assistive technology receives the same progress and `X of Y` feedback as sighted users | Search UI |
 | CSS Custom Highlight ranges avoid inserting `<mark>` elements | Highlighting does not mutate or fight framework-owned DOM | Core highlighter |
-| The search panel follows the browser's visual viewport | When the software keyboard opens or result navigation pans the page, fixed search controls remain visible instead of being stranded outside the usable viewport | React `SearchPanel` and `useSearchPanelViewport()` |
+| Top-anchored search panels do not inherit visual-viewport scroll offsets | Result navigation can pan the document without translating the already-fixed controls out of view; application-owned anchors can opt into `"preserve"` correction | React `SearchPanel` and `useSearchPanelViewport()` |
 | The mobile demo keeps search anchored to the top and removes decorative chrome | The panel remains stable while the iOS keyboard and browser toolbar animate, without relying on delayed bottom-viewport measurements | Demo custom UI |
 | Safe-area insets and `viewport-fit=cover` are respected | The panel avoids notches and rounded screen edges without disabling pinch zoom | Demo custom UI |
 | Mobile input text remains at least 16px and touch controls are enlarged | Focusing search does not trigger iOS text-field zoom, and navigation remains comfortable by touch | Demo custom UI |
