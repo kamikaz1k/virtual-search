@@ -128,11 +128,6 @@ export function CustomSearchPanel({
         <output aria-live="polite" aria-atomic="true">
           {label}
         </output>
-        <progress
-          max={Math.max(search.matches.length, 1)}
-          value={hasMatches ? search.activeIndex + 1 : 0}
-          aria-label="Search result position"
-        />
         <div className="command-search-actions">
           <button
             type="button"

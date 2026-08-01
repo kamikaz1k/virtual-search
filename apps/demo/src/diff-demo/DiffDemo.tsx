@@ -17,6 +17,8 @@ import "./styles.css";
 
 const demoData = createDiffDemoData(INLINE_DIFF);
 const virtualSearchItemAttribute = "data-virtual-search-item";
+const sourceGitHubUrl = "https://github.com/oven-sh/bun/pull/30412";
+const sourceDiffsHubUrl = "https://diffshub.com/oven-sh/bun/pull/30412";
 
 const codeViewSearchStyles = `
   ::highlight(virtual-search-match) {
@@ -211,10 +213,24 @@ export function DiffDemo() {
             </span>
           </a>
           <div className="diff-repo-path">
-            <span>vertex-labs</span>
-            <span>/</span>
-            <strong>runtime</strong>
-            <span className="diff-pr-pill">PR #1842</span>
+            <a
+              className="diff-repo-link"
+              href={sourceGitHubUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <span>oven-sh</span>
+              <span>/</span>
+              <strong>bun</strong>
+            </a>
+            <a
+              className="diff-pr-pill"
+              href={sourceGitHubUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              PR #30412 ↗
+            </a>
           </div>
           <a className="diff-demo-switch" href={recordsHref}>
             Records demo <span aria-hidden="true">↗</span>
@@ -226,9 +242,27 @@ export function DiffDemo() {
             <span className="diff-overline">Pull request · ready for review</span>
             <h1>Make every virtual frame searchable</h1>
             <p>
-              A DiffsHub-style CodeView rendering thousands of inline patch
-              lines. Search reaches code that has never entered the DOM.
+              Built from the patch in oven-sh/bun PR #30412, this DiffsHub-style
+              CodeView renders thousands of inline lines. It also exposed the
+              Shadow DOM boundary: search must index virtual code before it
+              mounts, then cross into the viewer’s shadow root to highlight it.
             </p>
+            <nav className="diff-source-links" aria-label="Source pull request">
+              <a
+                href={sourceGitHubUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                View PR on GitHub <span aria-hidden="true">↗</span>
+              </a>
+              <a
+                href={sourceDiffsHubUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                View original on DiffsHub <span aria-hidden="true">↗</span>
+              </a>
+            </nav>
           </div>
           <div className="diff-summary-meta">
             <div>
