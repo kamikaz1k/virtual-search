@@ -173,9 +173,7 @@ export function useCodeViewSearchRegion({
   const search = useVirtualSearch();
 
   useEffect(() => {
-    if (!search.isOpen || search.query.length === 0) {
-      setShadowHighlight(null);
-    }
+    setShadowHighlight(null);
   }, [search.isOpen, search.query]);
 
   useLayoutEffect(() => {
@@ -211,6 +209,7 @@ export function useCodeViewSearchRegion({
           line,
           context.signal,
         );
+        if (context.signal.aborted) return null;
         setShadowHighlight(
           renderedLine ? rangeForOccurrence(renderedLine, occurrence) : null,
         );
