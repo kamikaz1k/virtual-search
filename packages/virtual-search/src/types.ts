@@ -101,10 +101,21 @@ export interface VirtualSearchDiagnosticsOptions {
   missingHighlightStyles?: boolean;
 }
 
+export interface InputValueHighlightingOptions {
+  /** Paint matching substrings with an inert mirror over the text control. */
+  mode: "overlay";
+  /**
+   * Stacking order for the owned overlay host. Keep the Find panel above it.
+   * @default 2147483000
+   */
+  zIndex?: number;
+}
+
 export interface VirtualSearchOptions {
   root: Element | (() => Element | null);
   diagnostics?: VirtualSearchDiagnosticsOptions;
   executor?: SearchExecutor;
+  inputValueHighlighting?: InputValueHighlightingOptions;
   /**
    * @deprecated Opening the find panel no longer navigates or resets the
    * active match. Change the query or call a navigation method instead.

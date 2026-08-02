@@ -57,15 +57,17 @@ never change selection, highlights, focus, or scroll position.
 - Exact replication of every browser's whitespace and hidden-content rules.
 - Forcing every virtualized record to mount for passive highlighting.
 
-## Current limitation: text input values
+## Text input values
 
-Live values inside text-like `<input>` and `<textarea>` controls are not part
-of the v1 corpus. Unlike ordinary page text, a control's `.value` cannot be
-targeted by a DOM `Range`, so CSS Custom Highlights cannot paint an exact
-substring inside it.
+Live values inside text-like `<input>` and `<textarea>` controls are separate
+search documents in DOM order. Passwords, buttons, and other non-text controls
+are excluded. An `input` event refreshes the result set without navigating or
+moving focus.
 
-A future opt-in API will be named `inputValueHighlighting` to make this scope
-explicit. Its `overlay` mode will mirror control layout in a non-interactive
-overlay while keeping focus in the Find field. Searching and navigation of
-eligible control values can become built-in independently; passwords and
-non-text controls remain excluded.
+Because a control's `.value` cannot be targeted by a DOM `Range`, exact
+substring painting is opt-in through `inputValueHighlighting`. Its experimental
+`overlay` mode mirrors control layout in a non-interactive overlay while
+keeping focus in the Find field. Transformed or otherwise unsupported geometry
+falls back to a whole-control marker. Omitting the option disables painting,
+not search: input values remain indexed, counted, and navigable. Configuration
+is fixed for a controller's lifetime; recreate the controller to change it.

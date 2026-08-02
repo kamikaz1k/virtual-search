@@ -1,4 +1,10 @@
-import { buildCorpus, occurrenceIdentity, type PreparedCorpus } from "./corpus";
+import {
+  buildCorpus,
+  isSearchableInputValue,
+  occurrenceIdentity,
+  type InputValueMatch,
+  type PreparedCorpus,
+} from "./corpus";
 import { SearchDiagnostics } from "./diagnostics";
 import { createMainThreadExecutor } from "./executors/main-thread";
 import {
@@ -6,6 +12,7 @@ import {
   passiveHighlightName,
   SearchHighlighter,
 } from "./highlighter";
+import { InputValueHighlighter } from "./input-value-highlighter";
 import { VirtualSearchRevealError } from "./types";
 import type {
   SearchOccurrence,
@@ -98,11 +105,46 @@ function isRangeVisible(range: Range, root: Element): boolean {
   return false;
 }
 
+function isElementVisible(element: Element, root: Element): boolean {
+  for (
+    let current: Element | null = element;
+    current;
+    current = composedParent(current)
+  ) {
+    if (current.hasAttribute("hidden") || current.hasAttribute("inert")) {
+      return false;
+    }
+    const computedStyle = current.ownerDocument.defaultView
+      ?.getComputedStyle(current);
+    if (
+      computedStyle?.display === "none"
+      || computedStyle?.visibility === "hidden"
+      || computedStyle?.contentVisibility === "hidden"
+    ) {
+      return false;
+    }
+    if (current.tagName === "DETAILS" && !current.hasAttribute("open")) {
+      const summary = current.querySelector(":scope > summary");
+      if (!summary?.contains(element)) return false;
+    }
+    if (current === root) return true;
+  }
+  return false;
+}
+
+interface MountedHighlights {
+  ranges: Range[];
+  inputValues: InputValueMatch[];
+}
+
 export function createVirtualSearch(
   options: VirtualSearchOptions,
 ): VirtualSearchController {
   const executor = options.executor ?? createMainThreadExecutor();
   const highlighter = new SearchHighlighter();
+  const inputValueHighlighter = new InputValueHighlighter(
+    options.inputValueHighlighting,
+  );
   const diagnostics = new SearchDiagnostics(
     options.diagnostics?.missingHighlightStyles !== false,
   );
@@ -128,10 +170,8 @@ export function createVirtualSearch(
     listeners.forEach(listener => listener(state));
   };
 
-  const mutationIsInsideVirtualRegion = (mutation: MutationRecord) => {
-    const target = mutation.target instanceof Element
-      ? mutation.target
-      : mutation.target.parentElement;
+  const targetIsInsideVirtualRegion = (node: Node) => {
+    const target = node instanceof Element ? node : node.parentElement;
 
     return target
       ? [...regions.values()].some(region => {
@@ -141,26 +181,42 @@ export function createVirtualSearch(
       : false;
   };
 
+  const mutationIsOwnedInputOverlay = (mutation: MutationRecord) => {
+    const isOwned = (node: Node) => node instanceof Element && (
+      node.matches("[data-virtual-search-input-overlay]")
+      || Boolean(node.closest("[data-virtual-search-input-overlay]"))
+    );
+    if (isOwned(mutation.target)) return true;
+    const changedNodes = [...mutation.addedNodes, ...mutation.removedNodes];
+    return changedNodes.length > 0 && changedNodes.every(isOwned);
+  };
+
   const ensureMutationObserver = () => {
     const searchRoot = root();
     if (!searchRoot || observedRoot === searchRoot) return;
 
     mutationObserver?.disconnect();
+    observedRoot?.removeEventListener("input", onRootInput, true);
     observedRoot = searchRoot;
     mutationObserver = new MutationObserver(mutations => {
-      const relevantMutations = mutations.filter(mutation => !(
-        mutation.type === "attributes"
-        && mutation.attributeName === "hidden"
-        && mutation.oldValue === "until-found"
-        && mutation.target instanceof Element
-        && !mutation.target.hasAttribute("hidden")
-      ));
+      const relevantMutations = mutations.filter(mutation =>
+        !mutationIsOwnedInputOverlay(mutation)
+        && !(
+          mutation.type === "attributes"
+          && mutation.attributeName === "hidden"
+          && mutation.oldValue === "until-found"
+          && mutation.target instanceof Element
+          && !mutation.target.hasAttribute("hidden")
+        )
+      );
 
       if (
         disposed
         || state.query.length === 0
         || relevantMutations.length === 0
-        || relevantMutations.every(mutationIsInsideVirtualRegion)
+        || relevantMutations.every(mutation =>
+          targetIsInsideVirtualRegion(mutation.target)
+        )
         || mutationRefreshQueued
       ) {
         return;
@@ -171,7 +227,7 @@ export function createVirtualSearch(
         mutationRefreshQueued = false;
         if (state.query.length > 0 && !disposed) {
           const preferred = state.matches[state.activeIndex];
-          void runQuery(state.query, preferred);
+          void runQuery(state.query, preferred, false);
         }
       });
     });
@@ -183,18 +239,45 @@ export function createVirtualSearch(
       attributeOldValue: true,
       attributeFilter: ["hidden", "inert", "style", "class"],
     });
+    searchRoot.addEventListener("input", onRootInput, true);
   };
 
-  const mountedRanges = async (
+  function onRootInput(event: Event) {
+    const target = event.target;
+    if (
+      disposed
+      || state.query.length === 0
+      || mutationRefreshQueued
+      || !(target instanceof Element)
+      || !isSearchableInputValue(target)
+      || targetIsInsideVirtualRegion(target)
+    ) {
+      return;
+    }
+
+    mutationRefreshQueued = true;
+    queueMicrotask(() => {
+      mutationRefreshQueued = false;
+      if (state.query.length > 0 && !disposed) {
+        const preferred = state.matches[state.activeIndex];
+        void runQuery(state.query, preferred, false);
+      }
+    });
+  }
+
+  const mountedHighlights = async (
     matches: readonly SearchOccurrence[],
     signal: AbortSignal,
-  ): Promise<Range[]> => {
+  ): Promise<MountedHighlights> => {
     const ranges: Range[] = [];
+    const inputValues: InputValueMatch[] = [];
 
     for (const match of matches) {
       if (signal.aborted) break;
       const document = corpus.byIdentity.get(occurrenceIdentity(match));
       if (!document) continue;
+      const inputValue = document.locateInputValue?.(match);
+      if (inputValue) inputValues.push(inputValue);
       const located = await document.locateMounted(match, signal);
       diagnostics.checkHighlightRanges(
         located,
@@ -204,7 +287,7 @@ export function createVirtualSearch(
       ranges.push(...located);
     }
 
-    return ranges;
+    return { ranges, inputValues };
   };
 
   const scrollRangeIntoView = (range: Range) => {
@@ -219,6 +302,36 @@ export function createVirtualSearch(
     if (outsideViewport) {
       element.scrollIntoView({ block: "center", inline: "nearest" });
     }
+  };
+
+  const scrollElementIntoView = (element: HTMLElement) => {
+    const rect = element.getBoundingClientRect();
+    const margin = options.scrollMargin ?? 24;
+    const outsideViewport = rect.top < margin
+      || rect.bottom > globalThis.innerHeight - margin;
+    if (outsideViewport) {
+      element.scrollIntoView({ block: "center", inline: "nearest" });
+    }
+  };
+
+  const paintMounted = async (index: number, signal: AbortSignal) => {
+    const occurrence = state.matches[index];
+    if (!occurrence) return;
+    const document = corpus.byIdentity.get(occurrenceIdentity(occurrence));
+    if (!document) return;
+
+    const activeRanges = await document.locateMounted(occurrence, signal);
+    const activeInputValue = document.locateInputValue?.(occurrence);
+    const passive = await mountedHighlights(
+      state.matches.filter((_, matchIndex) => matchIndex !== index),
+      signal,
+    );
+    if (signal.aborted) return;
+    highlighter.apply(passive.ranges, activeRanges);
+    inputValueHighlighter.apply(
+      passive.inputValues,
+      activeInputValue ? [activeInputValue] : [],
+    );
   };
 
   const goTo = async (requestedIndex: number) => {
@@ -247,6 +360,7 @@ export function createVirtualSearch(
         occurrence,
         abort.signal,
       );
+      const activeInputValue = document.locateInputValue?.(occurrence);
       if (abort.signal.aborted) return;
       diagnostics.checkHighlightRanges(
         activeRanges,
@@ -256,8 +370,12 @@ export function createVirtualSearch(
       const searchRoot = root();
       if (
         !searchRoot
-        || activeRanges.length === 0
+        || (activeRanges.length === 0 && !activeInputValue)
         || activeRanges.some(range => !isRangeVisible(range, searchRoot))
+        || (
+          activeInputValue
+          && !isElementVisible(activeInputValue.element, searchRoot)
+        )
       ) {
         throw new VirtualSearchRevealError(occurrence);
       }
@@ -265,15 +383,22 @@ export function createVirtualSearch(
       const passiveMatches = state.matches.filter((_, matchIndex) =>
         matchIndex !== index
       );
-      const passiveRanges = await mountedRanges(
+      const passive = await mountedHighlights(
         passiveMatches,
         abort.signal,
       );
       if (abort.signal.aborted) return;
 
-      highlighter.apply(passiveRanges, activeRanges);
+      highlighter.apply(passive.ranges, activeRanges);
+      inputValueHighlighter.apply(
+        passive.inputValues,
+        activeInputValue ? [activeInputValue] : [],
+      );
       const activeRange = activeRanges[0];
       if (activeRange) scrollRangeIntoView(activeRange);
+      else if (activeInputValue) {
+        scrollElementIntoView(activeInputValue.element);
+      }
       emit({ status: "ready" });
     } catch (error) {
       if (!abort.signal.aborted) emit({ status: "error", error });
@@ -283,6 +408,7 @@ export function createVirtualSearch(
   const runQuery = async (
     query: string,
     preferred?: SearchOccurrence,
+    navigate = true,
   ) => {
     ensureMutationObserver();
     searchAbort?.abort();
@@ -291,6 +417,7 @@ export function createVirtualSearch(
     searchAbort = abort;
 
     highlighter.clear();
+    inputValueHighlighter.clear();
     emit({
       query,
       status: query.length === 0 ? "idle" : "searching",
@@ -341,7 +468,10 @@ export function createVirtualSearch(
         status: "ready",
       });
 
-      if (activeIndex !== -1) await goTo(activeIndex);
+      if (activeIndex !== -1) {
+        if (navigate) await goTo(activeIndex);
+        else await paintMounted(activeIndex, abort.signal);
+      }
     } catch (error) {
       if (!abort.signal.aborted) emit({ status: "error", error });
     }
@@ -369,7 +499,7 @@ export function createVirtualSearch(
     async invalidate() {
       if (state.query.length === 0) return;
       const preferred = state.matches[state.activeIndex];
-      await runQuery(state.query, preferred);
+      await runQuery(state.query, preferred, false);
     },
     open() {
       if (!state.isOpen) focusBeforeOpen = document.activeElement;
@@ -379,6 +509,7 @@ export function createVirtualSearch(
     close() {
       navigationAbort?.abort();
       highlighter.clear();
+      inputValueHighlighter.clear();
       emit({ isOpen: false });
       if (focusBeforeOpen instanceof HTMLElement) focusBeforeOpen.focus();
     },
@@ -391,7 +522,9 @@ export function createVirtualSearch(
       searchAbort?.abort();
       navigationAbort?.abort();
       highlighter.clear();
+      inputValueHighlighter.clear();
       mutationObserver?.disconnect();
+      observedRoot?.removeEventListener("input", onRootInput, true);
       executor.dispose?.();
       listeners.clear();
       regions.clear();

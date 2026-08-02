@@ -549,10 +549,94 @@ h2 {
   margin-bottom: 28px;
 }
 
-.reveal-lab-heading p {
+.reveal-lab-intro {
   max-width: 430px;
   justify-self: end;
+}
+
+.reveal-lab-intro p {
   font: 400 13px/1.6 "DM Mono", monospace;
+}
+
+.input-highlight-toggle {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--ink);
+  cursor: pointer;
+  user-select: none;
+  font: 500 10px/1.25 "DM Mono", monospace;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.input-highlight-toggle strong,
+.input-highlight-toggle small {
+  display: block;
+}
+
+.input-highlight-toggle strong {
+  font: inherit;
+}
+
+.input-highlight-toggle small {
+  margin-top: 4px;
+  color: rgba(28, 28, 28, 0.62);
+  font: 400 9px/1.35 "DM Mono", monospace;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.input-highlight-toggle input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.input-highlight-toggle-track {
+  position: relative;
+  width: 42px;
+  height: 22px;
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  background: transparent;
+  transition: background 160ms ease;
+}
+
+.input-highlight-toggle-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--ink);
+  transition: transform 160ms ease, background 160ms ease;
+}
+
+.input-highlight-toggle input:checked + .input-highlight-toggle-track {
+  background: var(--signal);
+}
+
+.input-highlight-toggle input:checked + .input-highlight-toggle-track .input-highlight-toggle-thumb {
+  background: var(--paper);
+  transform: translateX(20px);
+}
+
+.input-highlight-toggle input:focus-visible + .input-highlight-toggle-track {
+  outline: 2px solid var(--signal);
+  outline-offset: 3px;
+}
+
+.input-highlight-toggle-state {
+  min-width: 24px;
+  color: var(--signal);
 }
 
 .reveal-lab-grid {
@@ -605,21 +689,24 @@ h2 {
   text-transform: uppercase;
 }
 
-.reveal-search-term input {
+.reveal-search-term input,
+.reveal-search-term textarea {
   min-width: 0;
   width: 100%;
   border: 1px solid var(--ink);
-  border-radius: 999px;
+  border-radius: 14px;
   padding: 10px 14px;
   outline: 0;
   background: var(--paper);
   color: var(--ink);
   cursor: text;
   font: 500 12px/1 "DM Mono", monospace;
+  resize: none;
   text-transform: none;
 }
 
-.reveal-search-term input:focus-visible {
+.reveal-search-term input:focus-visible,
+.reveal-search-term textarea:focus-visible {
   outline: 3px solid var(--acid);
   outline-offset: 2px;
 }
@@ -874,7 +961,7 @@ footer .demo-route-link {
     gap: 20px;
   }
 
-  .reveal-lab-heading p {
+  .reveal-lab-intro {
     justify-self: start;
   }
 

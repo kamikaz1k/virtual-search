@@ -20,6 +20,7 @@ export interface VirtualSearchProviderProps extends PropsWithChildren {
   rootRef: RefObject<Element | null>;
   diagnostics?: VirtualSearchOptions["diagnostics"];
   executor?: VirtualSearchOptions["executor"];
+  inputValueHighlighting?: VirtualSearchOptions["inputValueHighlighting"];
   /** @deprecated Opening the find panel no longer navigates. */
   resetActiveMatchOnOpen?: boolean;
   searchOptions?: VirtualSearchOptions["searchOptions"];
@@ -31,6 +32,7 @@ export function VirtualSearchProvider({
   rootRef,
   diagnostics,
   executor,
+  inputValueHighlighting,
   resetActiveMatchOnOpen,
   searchOptions,
   scrollMargin,
@@ -43,6 +45,7 @@ export function VirtualSearchProvider({
       root: () => rootRef.current,
       ...(diagnostics ? { diagnostics } : {}),
       ...(executor ? { executor } : {}),
+      ...(inputValueHighlighting ? { inputValueHighlighting } : {}),
       ...(resetActiveMatchOnOpen === undefined
         ? {}
         : { resetActiveMatchOnOpen }),

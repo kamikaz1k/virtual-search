@@ -262,6 +262,7 @@ function LoadedDiffDemo({ demoData }: { demoData: DiffDemoData }) {
   return (
     <VirtualSearchProvider
       rootRef={scrollRef}
+      inputValueHighlighting={{ mode: "overlay", zIndex: 19 }}
       scrollMargin={80}
     >
       <div className="diff-demo">

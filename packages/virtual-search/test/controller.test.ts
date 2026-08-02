@@ -85,6 +85,109 @@ describe("createVirtualSearch", () => {
     expect(search.getState().activeIndex).toBe(0);
   });
 
+  it("searches text input and textarea values in document order", async () => {
+    document.body.innerHTML = `
+      <main id="root">
+        <p>Needle before</p>
+        <input type="text" value="Input needle value">
+        <input type="password" value="Password needle value">
+        <input type="text" style="display: none" value="Hidden needle value">
+        <textarea>Textarea needle value</textarea>
+        <input type="button" value="Button needle value">
+        <p>Needle after</p>
+      </main>
+      <form data-virtual-search-panel>
+        <input type="search" value="Panel needle value">
+      </form>
+    `;
+    const root = document.querySelector("#root")!;
+    const search = createVirtualSearch({ root });
+
+    await search.setQuery("needle");
+
+    expect(search.getState().matches).toHaveLength(4);
+    expect(search.getState().matches.map(match => match.partId)).toEqual([
+      "text",
+      "value",
+      "value",
+      "text",
+    ]);
+    expect(search.getState().matches.map(match => match.documentOrder)).toEqual([
+      0,
+      1,
+      2,
+      3,
+    ]);
+  });
+
+  it("paints input value matches with the opt-in overlay without stealing focus", async () => {
+    document.body.innerHTML = `
+      <input id="find" type="search">
+      <main id="root">
+        <input id="target" type="text" value="Alpha needle omega">
+      </main>
+    `;
+    const root = document.querySelector("#root")!;
+    const find = document.querySelector<HTMLInputElement>("#find")!;
+    const target = document.querySelector<HTMLInputElement>("#target")!;
+    target.getBoundingClientRect = () => ({
+      x: 20,
+      y: 30,
+      top: 30,
+      right: 220,
+      bottom: 70,
+      left: 20,
+      width: 200,
+      height: 40,
+      toJSON: () => ({}),
+    });
+    find.focus();
+    const search = createVirtualSearch({
+      root,
+      inputValueHighlighting: { mode: "overlay" },
+    });
+
+    await search.setQuery("needle");
+
+    expect(document.activeElement).toBe(find);
+    expect(
+      document.querySelector("[data-virtual-search-input-overlay]"),
+    ).not.toBeNull();
+    expect(
+      document.querySelector(
+        '[data-virtual-search-input-highlight="active"]',
+      )?.textContent,
+    ).toBe("needle");
+
+    search.close();
+    expect(
+      document.querySelector("[data-virtual-search-input-overlay]"),
+    ).toBeNull();
+  });
+
+  it("refreshes matches after input value changes without navigating", async () => {
+    document.body.innerHTML = `
+      <main id="root">
+        <input id="target" type="text" value="Needle value">
+      </main>
+    `;
+    const root = document.querySelector("#root")!;
+    const target = document.querySelector<HTMLInputElement>("#target")!;
+    const search = createVirtualSearch({ root });
+
+    await search.setQuery("needle");
+    expect(search.getState().matches).toHaveLength(1);
+    vi.mocked(Element.prototype.scrollIntoView).mockClear();
+
+    target.value = "Updated value";
+    target.dispatchEvent(new Event("input", { bubbles: true }));
+
+    await vi.waitFor(() => {
+      expect(search.getState().matches).toHaveLength(0);
+    });
+    expect(Element.prototype.scrollIntoView).not.toHaveBeenCalled();
+  });
+
   it("does not navigate when search reopens", async () => {
     document.body.innerHTML = `
       <main id="root">

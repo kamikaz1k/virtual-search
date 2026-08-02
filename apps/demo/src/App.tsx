@@ -1,6 +1,7 @@
 import {
   lazy,
   Suspense,
+  type ReactNode,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -42,8 +43,6 @@ function createDemoExecutor() {
   }
 }
 
-const searchExecutor = createDemoExecutor();
-
 function SearchControls() {
   const search = useVirtualSearch();
   useFindShortcut();
@@ -59,7 +58,15 @@ function SearchControls() {
   );
 }
 
-function RevealableContentDemo() {
+interface RevealableContentDemoProps {
+  inputValueOverlayEnabled: boolean;
+  onInputValueOverlayChange: (enabled: boolean) => void;
+}
+
+function RevealableContentDemo({
+  inputValueOverlayEnabled,
+  onInputValueOverlayChange,
+}: RevealableContentDemoProps) {
   const hiddenUntilFoundRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
@@ -73,10 +80,32 @@ function RevealableContentDemo() {
           <span className="eyebrow">Semantic reveal / ordinary DOM</span>
           <h2 id="reveal-lab-title">Find it. Open it.</h2>
         </div>
-        <p>
-          These phrases begin inside collapsed content. Searching for either
-          one reveals its container before highlighting and scrolling.
-        </p>
+        <div className="reveal-lab-intro">
+          <p>
+            These text controls are searchable themselves. The opt-in overlay
+            paints the exact matching text without taking focus from Find.
+            Turn it off to compare navigation without substring painting.
+          </p>
+          <label className="input-highlight-toggle">
+            <span>
+              <strong>Input text highlight</strong>
+              <small>Search and navigation stay enabled either way</small>
+            </span>
+            <input
+              type="checkbox"
+              checked={inputValueOverlayEnabled}
+              onChange={event => {
+                onInputValueOverlayChange(event.target.checked);
+              }}
+            />
+            <span className="input-highlight-toggle-track" aria-hidden="true">
+              <span className="input-highlight-toggle-thumb" />
+            </span>
+            <span className="input-highlight-toggle-state">
+              {inputValueOverlayEnabled ? "On" : "Off"}
+            </span>
+          </label>
+        </div>
       </header>
 
       <div className="reveal-lab-grid">
@@ -117,11 +146,11 @@ function RevealableContentDemo() {
           </div>
           <label className="reveal-search-term">
             <span>Try this exact search</span>
-            <input
-              type="text"
+            <textarea
               readOnly
               value="Cobalt Archive"
               aria-label="Search phrase: Cobalt Archive"
+              rows={2}
               onFocus={event => event.currentTarget.select()}
             />
           </label>
@@ -146,10 +175,37 @@ function RevealableContentDemo() {
   );
 }
 
-function RecordsDemo() {
+interface RecordsSearchSurfaceProps {
+  children: ReactNode;
+  inputValueOverlayEnabled: boolean;
+}
+
+function RecordsSearchSurface({
+  children,
+  inputValueOverlayEnabled,
+}: RecordsSearchSurfaceProps) {
   const rootRef = useRef<HTMLElement>(null);
+  const executorRef = useRef<ReturnType<typeof createDemoExecutor> | null>(null);
+  executorRef.current ??= createDemoExecutor();
+
+  return (
+    <VirtualSearchProvider
+      rootRef={rootRef}
+      executor={executorRef.current}
+      {...(inputValueOverlayEnabled
+        ? { inputValueHighlighting: { mode: "overlay" as const, zIndex: 19 } }
+        : {})}
+    >
+      <SearchControls />
+      <main ref={rootRef}>{children}</main>
+    </VirtualSearchProvider>
+  );
+}
+
+function RecordsDemo() {
   const diffDemoHref = `${import.meta.env.BASE_URL}diff`;
   const [useStressDataset, setUseStressDataset] = useState(false);
+  const [inputValueOverlayEnabled, setInputValueOverlayEnabled] = useState(true);
   const [isDatasetPending, startDatasetTransition] = useTransition();
   const dataset = useMemo(
     () => useStressDataset ? getStressDataset() : standardDataset,
@@ -157,13 +213,10 @@ function RecordsDemo() {
   );
 
   return (
-    <VirtualSearchProvider
-      rootRef={rootRef}
-      executor={searchExecutor}
+    <RecordsSearchSurface
+      key={inputValueOverlayEnabled ? "input-overlay-on" : "input-overlay-off"}
+      inputValueOverlayEnabled={inputValueOverlayEnabled}
     >
-      <SearchControls />
-
-      <main ref={rootRef}>
         <nav className="demo-browser" aria-label="Demo browser">
           <span className="demo-browser-label">Demo browser</span>
           <span className="demo-browser-current" aria-current="page">
@@ -234,7 +287,10 @@ function RecordsDemo() {
           </p>
         </aside>
 
-        <RevealableContentDemo />
+        <RevealableContentDemo
+          inputValueOverlayEnabled={inputValueOverlayEnabled}
+          onInputValueOverlayChange={setInputValueOverlayEnabled}
+        />
 
         <OrderList items={dataset.orders} />
 
@@ -245,8 +301,7 @@ function RecordsDemo() {
             Continue to diff viewer <span aria-hidden="true">↗</span>
           </a>
         </footer>
-      </main>
-    </VirtualSearchProvider>
+    </RecordsSearchSurface>
   );
 }
 

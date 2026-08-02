@@ -95,12 +95,11 @@ There are two separate behaviors:
 1. **Selecting the query in the custom Find field on Cmd/Ctrl+F:** already
    supported by both `useFindShortcut()` and the built-in `SearchPanel`.
 2. **Finding and highlighting a matching substring in a page's own `<input>`
-   or `<textarea>` value:** missing because form controls are excluded from the
-   corpus. Adding this requires a control-specific occurrence and reveal path,
-   not merely including the `value` string. The planned opt-in
-   `inputValueHighlighting` API will use an inert mirror overlay for exact
-   substring painting without stealing focus from the Find field. It must also
-   define fallback behavior plus password, autofill, and privacy exclusions.
+   or `<textarea>` value:** supported for text-like controls as a separate
+   corpus document. The opt-in `inputValueHighlighting` API uses an inert mirror
+   overlay for exact substring painting without stealing focus from the Find
+   field. Password and non-text controls are excluded; autofill and unusual
+   layout cases still need broader browser validation.
 
 ## 2. Query matching semantics
 
@@ -143,8 +142,8 @@ offsets**, not only equality/order, and collation can change match length.
 | Closed `<details>` body | HTML requires synchronous search access; choosing an active match queues ancestor reveal and opens the details element, producing a `toggle` event. Modern engines implement this, with recent fixes around exclusive accordions. | Included; active navigation opens closed ancestors before locating. | Supported; event/timing not exact |
 | `hidden="until-found"` | Searchable; active-match reveal fires bubbling `beforematch`, rechecks connection/state, removes `hidden`, then scrolls. The element needs a revealable box; `display:none`, `contents`, or `inline` defeats the mechanism. Modern support reached Baseline in late 2025, so older clients remain a concern. | Included; dispatches an untrusted non-bubbling `Event` by default, then removes `hidden`. It does not recheck every standard precondition or box requirement. | Partial; event must bubble and cancellation/mutation cases need tests |
 | Application tabs/accordions using ordinary `hidden`/CSS | Native Find generally cannot discover content that has been removed from layout. Authors must use `hidden=until-found` or reveal integration. | Same for ordinary DOM; a registered virtual region can opt into application-specific reveal. | Different by design, useful |
-| `<input>` values | Blink exposes actual visible/autofilled text through user-agent shadow content and treats the control as a Find boundary. Suggested-but-uncommitted autofill values are deliberately not searched. Password and non-text controls need privacy/engine tests. | All inputs excluded. | Missing, high priority |
-| `<textarea>` values | Searchable in native engines as a separate control surface; a multiline textarea has special layout handling. | Excluded. | Missing, high priority |
+| `<input>` values | Blink exposes actual visible/autofilled text through user-agent shadow content and treats the control as a Find boundary. Suggested-but-uncommitted autofill values are deliberately not searched. Password and non-text controls need privacy/engine tests. | Text-like live values are indexed as boundaries; passwords and non-text controls are excluded. Exact paint is an opt-in overlay. | Experimental; autofill and layout QA remain |
+| `<textarea>` values | Searchable in native engines as a separate control surface; a multiline textarea has special layout handling. | Live values are indexed separately; exact paint is an opt-in wrapping mirror. | Experimental; multiline geometry QA remains |
 | `<select>/<option>` | Blink searches listbox/multiple options but not the closed one-line menu-list implementation. Engines may differ. | Both select and option excluded. | Missing / browser-specific |
 | Placeholder, accessible name, `alt`, `title`, ARIA labels | Find is primarily rendered text, not the accessibility name. Placeholder and replaced-element rules vary; do not silently index metadata as if native. | Not searched. | Usually aligned; fixture-test exceptions |
 | `contenteditable`/`designMode` | Rendered text is searchable; active selection and editing interactions can be special. | Ordinary DOM text is searchable. | Partial; selection/edit mutation behavior differs |
@@ -336,11 +335,10 @@ for those cases requires a browser extension or an embedding-client API.
 
 ### P0: correctness gaps likely to surprise users
 
-1. Add searchable text-input and textarea values as explicit control parts.
-   Add opt-in `inputValueHighlighting: { mode: "overlay" }` substring painting
-   backed by a non-interactive mirror, with whole-control fallback and tests
-   for disabled, readonly, password, autofill, suggested values, multiline
-   scroll, RTL, custom fonts, zoom, and focus preservation.
+1. Harden the shipped text-input and textarea value support: validate disabled,
+   readonly, autofill and suggested values, multiline scroll, RTL, custom
+   fonts, zoom, transformed-control fallback, and focus preservation across
+   browser engines.
 2. Replace tag-name text serialization with a rendered-text abstraction that
    respects computed layout boundaries and `white-space`. Keep the data-region
    contract separate because application data has no layout yet.

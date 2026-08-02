@@ -40,8 +40,8 @@ dataset. Search for `Alice`, or enable 100K and search for
 The revealable-content specimens exercise ordinary DOM semantics as well:
 search for `Orchid Protocol` to open a closed `<details>` element, or
 `Cobalt Archive` to reveal content marked `hidden="until-found"`. The visible
-phrase controls are form inputs, so they are not duplicate matches in the page
-corpus.
+input and textarea are matches too: navigate once more to move from the form
+control value to the semantically revealable occurrence.
 
 ## React setup
 
@@ -208,14 +208,12 @@ reproductions, and the validation matrix live in
 
 ### Text input value highlighting
 
-Virtual Search currently excludes values rendered inside text-like `<input>`
-elements and `<textarea>` elements. Their live `.value` is not a DOM text node,
-so it cannot be addressed by the `Range` objects used for ordinary CSS Custom
-Highlights. Native Find can paint those substrings through browser-internal
-control rendering APIs that page JavaScript cannot access.
+Virtual Search indexes the live `.value` of text, search, email, telephone, and
+URL inputs plus textareas. They participate in document order and update the
+active result set when an `input` event fires. Passwords and non-text controls
+are deliberately excluded.
 
-Planned support will make these values searchable and navigable while keeping
-exact substring painting explicitly opt-in. The proposed option is named
+Exact substring painting remains explicitly opt-in. The option is named
 `inputValueHighlighting` so it cannot be mistaken for ordinary DOM or virtual
 record highlighting:
 
@@ -228,14 +226,40 @@ createVirtualSearch({
 });
 ```
 
-Overlay mode will use an inert, translucent mirror positioned over the matched
+The React provider accepts the same option:
+
+```tsx
+<VirtualSearchProvider
+  rootRef={rootRef}
+  inputValueHighlighting={{ mode: "overlay", zIndex: 1000 }}
+>
+  {children}
+</VirtualSearchProvider>
+```
+
+Omit `inputValueHighlighting` to disable only the visual overlay. Text-like
+control values are still indexed, counted, and navigated to:
+
+```tsx
+<VirtualSearchProvider rootRef={rootRef}>
+  {children}
+</VirtualSearchProvider>
+```
+
+Overlay mode uses an inert, translucent mirror positioned over the matched
 substring without moving focus away from the Find field. It must account for
 control padding, fonts, direction, wrapping, and the control's internal scroll
-position. It will therefore remain opt-in until its correctness and cost have
-been validated across single-line inputs, multiline textareas, mobile zoom,
-RTL text, custom fonts, and heavily styled controls. Unsupported geometry can
-fall back to marking the whole control. Passwords and non-text controls will
-not be indexed.
+position. It remains experimental and opt-in while correctness and cost are
+validated across single-line inputs, multiline textareas, mobile zoom, RTL
+text, custom fonts, and heavily styled controls. Transformed controls fall
+back to marking the whole control. Set `zIndex` when the host application needs
+to place its Find panel or other fixed UI above the overlay.
+
+Configuration is read when the controller is created. If an application offers
+a runtime preference, recreate the controller (or remount the React provider)
+when that preference changes. The records demo includes an **Input text
+highlight** switch beside its searchable input and textarea examples so the two
+behaviors can be compared directly.
 
 ### Responsive and otherwise invisible content
 

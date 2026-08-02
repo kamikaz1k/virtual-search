@@ -21,11 +21,20 @@ const excludedTags = new Set([
   "STYLE",
   "TEMPLATE",
   "NOSCRIPT",
-  "TEXTAREA",
-  "INPUT",
   "SELECT",
   "OPTION",
 ]);
+
+const searchableInputTypes = new Set([
+  "email",
+  "search",
+  "tel",
+  "text",
+  "url",
+]);
+
+const inputValueKeys = new WeakMap<Element, string>();
+let nextInputValueKey = 0;
 
 const blockTags = new Set([
   "ADDRESS", "ARTICLE", "ASIDE", "BLOCKQUOTE", "BR", "DD", "DIV", "DL",
@@ -44,6 +53,15 @@ export interface PreparedDocument extends SearchDocument {
     occurrence: SearchOccurrence,
     signal: AbortSignal,
   ): Promise<readonly Range[]>;
+  locateInputValue?(
+    occurrence: SearchOccurrence,
+  ): InputValueMatch | null;
+}
+
+export interface InputValueMatch {
+  element: HTMLInputElement | HTMLTextAreaElement;
+  start: number;
+  end: number;
 }
 
 export interface PreparedCorpus {
@@ -179,43 +197,95 @@ function createDomDocument(
         ? range.startContainer
         : range.startContainer.parentElement;
       if (!matchedElement) return null;
-
-      const ancestors: Element[] = [];
-      for (
-        let ancestor: Element | null = matchedElement;
-        ancestor;
-        ancestor = ancestor.parentElement
-      ) {
-        ancestors.push(ancestor);
-      }
-
-      for (const ancestor of ancestors.reverse()) {
-        if (signal.aborted) return null;
-
-        if (
-          ancestor.tagName === "DETAILS"
-          && !ancestor.hasAttribute("open")
-        ) {
-          const summary = ancestor.querySelector(":scope > summary");
-          if (!summary?.contains(matchedElement)) {
-            ancestor.setAttribute("open", "");
-          }
-        }
-
-        if (ancestor.getAttribute("hidden") === "until-found") {
-          const EventConstructor = ancestor.ownerDocument.defaultView?.Event
-            ?? Event;
-          ancestor.dispatchEvent(new EventConstructor("beforematch"));
-          if (signal.aborted) return null;
-          ancestor.removeAttribute("hidden");
-        }
-      }
-
-      return matchedElement;
+      return revealElementAncestors(matchedElement, signal);
     },
     async locateMounted(occurrence) {
       const range = createRangeFromTextMap(map, occurrence.start, occurrence.end);
       return range ? [range] : [];
+    },
+  };
+}
+
+function revealElementAncestors(
+  matchedElement: Element,
+  signal: AbortSignal,
+): Element | null {
+  const ancestors: Element[] = [];
+  for (
+    let ancestor: Element | null = matchedElement;
+    ancestor;
+    ancestor = ancestor.parentElement
+  ) {
+    ancestors.push(ancestor);
+  }
+
+  for (const ancestor of ancestors.reverse()) {
+    if (signal.aborted) return null;
+    if (ancestor.tagName === "DETAILS" && !ancestor.hasAttribute("open")) {
+      const summary = ancestor.querySelector(":scope > summary");
+      if (!summary?.contains(matchedElement)) ancestor.setAttribute("open", "");
+    }
+    if (ancestor.getAttribute("hidden") === "until-found") {
+      const EventConstructor = ancestor.ownerDocument.defaultView?.Event
+        ?? Event;
+      ancestor.dispatchEvent(new EventConstructor("beforematch"));
+      if (signal.aborted) return null;
+      ancestor.removeAttribute("hidden");
+    }
+  }
+  return matchedElement;
+}
+
+export function isSearchableInputValue(
+  element: Element,
+): element is HTMLInputElement | HTMLTextAreaElement {
+  if (element.closest("[data-virtual-search-panel]")) return false;
+  if (element.tagName === "TEXTAREA") return true;
+  if (element.tagName !== "INPUT") return false;
+  return searchableInputTypes.has((element as HTMLInputElement).type);
+}
+
+function inputValueKey(element: Element): string {
+  const existing = inputValueKeys.get(element);
+  if (existing) return existing;
+  const key = `input:${nextInputValueKey}`;
+  nextInputValueKey += 1;
+  inputValueKeys.set(element, key);
+  return key;
+}
+
+function createInputValueDocument(
+  element: HTMLInputElement | HTMLTextAreaElement,
+  unitOrder: number,
+  documentOrder: number,
+): PreparedDocument {
+  return {
+    regionId: "__dom__",
+    unitKey: inputValueKey(element),
+    unitOrder,
+    documentOrder,
+    parts: [{ id: "value", text: element.value }],
+    async reveal(_occurrence, signal) {
+      return element.isConnected
+        ? revealElementAncestors(element, signal)
+        : null;
+    },
+    async locateMounted() {
+      return [];
+    },
+    locateInputValue(occurrence) {
+      if (
+        !element.isConnected
+        || occurrence.start < 0
+        || occurrence.end > element.value.length
+      ) {
+        return null;
+      }
+      return {
+        element,
+        start: occurrence.start,
+        end: occurrence.end,
+      };
     },
   };
 }
@@ -259,6 +329,7 @@ export async function buildCorpus(
   const documents: PreparedDocument[] = [];
   const domBuilder = new DomTextBuilder();
   let domSegment = 0;
+  let inputValueOrder = 0;
   let documentOrder = 0;
 
   const flushDom = () => {
@@ -309,6 +380,22 @@ export async function buildCorpus(
         );
         documentOrder += 1;
       });
+      return;
+    }
+
+    if (
+      node !== root
+      && isSearchableInputValue(node)
+      && !isExcluded(node)
+    ) {
+      flushDom();
+      if (node.value.length > 0) {
+        documents.push(
+          createInputValueDocument(node, inputValueOrder, documentOrder),
+        );
+        inputValueOrder += 1;
+        documentOrder += 1;
+      }
       return;
     }
 
