@@ -1,76 +1,23 @@
-const fileNames = [
-  "src/runtime/scheduler.ts",
-  "src/runtime/signal-relay.ts",
-  "src/runtime/worker-pool.ts",
-  "src/http/router.ts",
-  "src/http/request-context.ts",
-  "src/cache/segment-store.ts",
-  "src/observability/trace-buffer.ts",
-  "src/cli/inspect.ts",
-  "src/config/schema.ts",
-  "test/runtime/scheduler.test.ts",
-  "test/runtime/signal-relay.test.ts",
-  "docs/architecture/virtual-runtime.md",
-] as const;
+export const FULL_DIFF_METADATA = {
+  additions: 1_009_257,
+  bytes: 43_415_617,
+  deletions: 4_024,
+  files: 2_188,
+  lines: 1_029_638,
+  sha256: "d94d35c1f6f033981d812cdaa61980bb26ecf645b197c94f9a1bf3af092779b3",
+} as const;
 
-const SIGNAL_LINES = new Map([
-  [1, new Set([24, 112])],
-  [4, new Set([78])],
-  [6, new Set([143])],
-  [8, new Set([46])],
-  [10, new Set([159])],
-]);
+export const FULL_DIFF_URL =
+  `${import.meta.env.BASE_URL}oven-sh-bun-pr-30412.diff`;
 
-function sourceLine(fileIndex: number, lineNumber: number): string {
-  const signalLines = SIGNAL_LINES.get(fileIndex);
-
-  if (signalLines?.has(lineNumber)) {
-    return `  signalRelay.publish("frame-ready", { shard: ${fileIndex}, sequence: ${lineNumber} });`;
+export async function loadFullDiff(signal?: AbortSignal): Promise<string> {
+  const response = await fetch(
+    FULL_DIFF_URL,
+    signal ? { signal } : undefined,
+  );
+  if (!response.ok) {
+    throw new Error(`Could not load the full PR diff (${response.status}).`);
   }
 
-  if (lineNumber % 41 === 0) {
-    return `  const checkpoint${lineNumber} = await runtime.flushPartition(${fileIndex});`;
-  }
-
-  if (lineNumber % 17 === 0) {
-    return `  metrics.observe("virtual_window", ${lineNumber});`;
-  }
-
-  if (lineNumber % 11 === 0) {
-    return `  await scheduler.yieldToShard(${lineNumber % 7});`;
-  }
-
-  return `  frame[${lineNumber}] = reconcileSegment(source, ${lineNumber}, options);`;
+  return response.text();
 }
-
-function buildFilePatch(name: string, fileIndex: number): string {
-  const lineCount = 180;
-  const lines = [
-    `diff --git a/${name} b/${name}`,
-    `index ${String(fileIndex + 17).padStart(7, "0")}..${String(fileIndex + 91).padStart(7, "0")} 100644`,
-    `--- a/${name}`,
-    `+++ b/${name}`,
-    `@@ -1,${lineCount} +1,${lineCount} @@`,
-  ];
-
-  for (let lineNumber = 1; lineNumber <= lineCount; lineNumber += 1) {
-    const nextLine = sourceLine(fileIndex, lineNumber);
-
-    if (lineNumber % 53 === 0) {
-      lines.push(
-        `-  frame[${lineNumber}] = reconcileSegment(source, ${lineNumber}, legacyOptions);`,
-        `+${nextLine}`,
-      );
-    } else {
-      lines.push(` ${nextLine}`);
-    }
-  }
-
-  return lines.join("\n");
-}
-
-export const INLINE_DIFF = `${fileNames
-  .map(buildFilePatch)
-  .join("\n")}\n`;
-
-export const INLINE_DIFF_FILE_NAMES = fileNames;

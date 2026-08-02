@@ -114,7 +114,9 @@ export function createDiffDemoData(patch: string): DiffDemoData {
       continue;
     }
 
-    if (!currentFile || rawLine.startsWith("+++") || rawLine.startsWith("---")) {
+    const isFileMarker = /^(?:\+\+\+|---) (?:[ab]\/|\/dev\/null|\")/
+      .test(rawLine);
+    if (!currentFile || isFileMarker) {
       continue;
     }
 

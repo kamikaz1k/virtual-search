@@ -3,19 +3,18 @@ import {
   CodeView,
   type CodeViewHandle,
 } from "@pierre/diffs/react";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   useFindShortcut,
   useVirtualSearch,
   VirtualSearchProvider,
 } from "virtual-search/react";
 import { CustomSearchPanel } from "../CustomSearchPanel";
-import { createDiffDemoData } from "./diffCorpus";
-import { INLINE_DIFF } from "./fixture";
+import { createDiffDemoData, type DiffDemoData } from "./diffCorpus";
+import { FULL_DIFF_METADATA, loadFullDiff } from "./fixture";
 import { useCodeViewSearchRegion } from "./useCodeViewSearchRegion";
 import "./styles.css";
 
-const demoData = createDiffDemoData(INLINE_DIFF);
 const virtualSearchItemAttribute = "data-virtual-search-item";
 const sourceGitHubUrl = "https://github.com/oven-sh/bun/pull/30412";
 const sourceDiffsHubUrl = "https://diffshub.com/oven-sh/bun/pull/30412";
@@ -42,7 +41,7 @@ const codeViewSearchStyles = `
   }
 `;
 
-function SearchControls() {
+function SearchControls({ demoData }: { demoData: DiffDemoData }) {
   const search = useVirtualSearch();
   useFindShortcut();
 
@@ -58,8 +57,8 @@ function SearchControls() {
         <kbd>⌘ F</kbd>
       </button>
       <CustomSearchPanel
-        kicker="Virtual diff search · 2,196 indexed lines"
-        placeholder='Try “signalRelay”'
+        kicker={`Virtual diff search · ${demoData.units.reduce((sum, unit) => sum + unit.parts.length, 0).toLocaleString()} indexed lines`}
+        placeholder='Try “allocator”'
         emptyLabel="Type to search every file in this diff"
         inputLabel="Search all diff content"
       />
@@ -68,8 +67,10 @@ function SearchControls() {
 }
 
 function DiffWorkspace({
+  demoData,
   scrollRef,
 }: {
+  demoData: DiffDemoData;
   scrollRef: React.RefObject<HTMLDivElement | null>;
 }) {
   const viewerRef = useRef<CodeViewHandle<undefined>>(null);
@@ -195,8 +196,68 @@ function DiffWorkspace({
 }
 
 export function DiffDemo() {
+  const [demoData, setDemoData] = useState<DiffDemoData | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    void loadFullDiff(controller.signal)
+      .then(patch => {
+        if (!controller.signal.aborted) {
+          setDemoData(createDiffDemoData(patch));
+        }
+      })
+      .catch(error => {
+        if (!controller.signal.aborted) {
+          setLoadError(
+            error instanceof Error ? error.message : "Could not load the PR diff.",
+          );
+        }
+      });
+
+    return () => controller.abort();
+  }, []);
+
+  if (loadError) {
+    return (
+      <div className="diff-fixture-state" role="alert">
+        <span>Full diff unavailable</span>
+        <strong>{loadError}</strong>
+        <a href={import.meta.env.BASE_URL}>Return to records demo</a>
+      </div>
+    );
+  }
+
+  if (!demoData) {
+    return (
+      <div className="diff-fixture-state" role="status">
+        <span>Loading complete PR #30412</span>
+        <strong>
+          {FULL_DIFF_METADATA.files.toLocaleString()} files · {(
+            FULL_DIFF_METADATA.bytes / 1_000_000
+          ).toFixed(1)} MB
+        </strong>
+        <small>Downloading and indexing the one-to-one base-to-head diff…</small>
+      </div>
+    );
+  }
+
+  return <LoadedDiffDemo demoData={demoData} />;
+}
+
+function LoadedDiffDemo({ demoData }: { demoData: DiffDemoData }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const recordsHref = import.meta.env.BASE_URL;
+  const allocatorMatches = demoData.units.reduce(
+    (count, unit) => count + unit.parts.filter(
+      part => part.text.toLowerCase().includes("allocator"),
+    ).length,
+    0,
+  );
+  const allocatorFiles = demoData.units.filter(unit =>
+    unit.parts.some(part => part.text.toLowerCase().includes("allocator"))
+  ).length;
 
   return (
     <VirtualSearchProvider
@@ -242,10 +303,11 @@ export function DiffDemo() {
             <span className="diff-overline">Pull request · ready for review</span>
             <h1>Make every virtual frame searchable</h1>
             <p>
-              Built from the patch in oven-sh/bun PR #30412, this DiffsHub-style
-              CodeView renders thousands of inline lines. It also exposed the
-              Shadow DOM boundary: search must index virtual code before it
-              mounts, then cross into the viewer’s shadow root to highlight it.
+              This is the complete base-to-head diff for oven-sh/bun PR #30412:
+              every one of its 2,188 changed files and more than one million
+              added lines. The demo also exposed the Shadow DOM boundary:
+              search must index virtual code before it mounts, then cross into
+              the viewer’s shadow root to highlight it.
             </p>
             <nav className="diff-source-links" aria-label="Source pull request">
               <a
@@ -285,14 +347,14 @@ export function DiffDemo() {
           <div className="diff-search-prompt">
             <span className="diff-prompt-number">01</span>
             <p>
-              Press <kbd>⌘ F</kbd> and search for <code>signalRelay</code>.
-              Six matches are distributed across this virtualized review.
+              Press <kbd>⌘ F</kbd> and search for <code>allocator</code>.
+              {` ${allocatorMatches.toLocaleString()} matching lines span ${allocatorFiles.toLocaleString()} files in this virtualized review.`}
             </p>
           </div>
         </section>
 
-        <DiffWorkspace scrollRef={scrollRef} />
-        <SearchControls />
+        <DiffWorkspace demoData={demoData} scrollRef={scrollRef} />
+        <SearchControls demoData={demoData} />
       </div>
     </VirtualSearchProvider>
   );
