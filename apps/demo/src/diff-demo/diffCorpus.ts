@@ -114,7 +114,7 @@ export function createDiffDemoData(patch: string): DiffDemoData {
       continue;
     }
 
-    const isFileMarker = /^(?:\+\+\+|---) (?:[ab]\/|\/dev\/null|\")/
+    const isFileMarker = /^(?:\+\+\+|---) (?:[ab]\/|\/dev\/null|")/
       .test(rawLine);
     if (!currentFile || isFileMarker) {
       continue;

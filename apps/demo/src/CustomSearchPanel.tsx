@@ -59,7 +59,7 @@ export function CustomSearchPanel({
     ? search.error.message
     : search.error == null
       ? undefined
-      : String(search.error);
+      : "Search failed";
 
   const onSubmit = (event: FormEvent) => {
     event.preventDefault();

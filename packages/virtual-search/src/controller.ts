@@ -213,7 +213,6 @@ export function createVirtualSearch(
       if (
         disposed
         || state.query.length === 0
-        || relevantMutations.length === 0
         || relevantMutations.every(mutation =>
           targetIsInsideVirtualRegion(mutation.target)
         )

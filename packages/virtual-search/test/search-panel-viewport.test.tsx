@@ -108,7 +108,7 @@ describe("SearchPanel visual viewport behavior", () => {
     expect(panel.style.translate).toBe("");
 
     viewport.offsetTop = 240;
-    act(() => globalThis.dispatchEvent(new Event("scroll")));
+    await act(() => globalThis.dispatchEvent(new Event("scroll")));
 
     await waitFor(() => {
       expect(panel.style.getPropertyValue("--virtual-search-viewport-top"))
@@ -159,7 +159,7 @@ describe("SearchPanel visual viewport behavior", () => {
     });
 
     const panel = rendered.getByRole("search");
-    act(() => globalThis.dispatchEvent(new Event("scroll")));
+    await act(() => globalThis.dispatchEvent(new Event("scroll")));
     await new Promise(resolve => setTimeout(resolve, 50));
     viewport.offsetTop = 180;
 
@@ -217,7 +217,7 @@ describe("SearchPanel visual viewport behavior", () => {
     expect(panel.style.translate).toBe("0px 98px");
 
     panelTop = 350;
-    act(() => globalThis.dispatchEvent(new Event("scroll")));
+    await act(() => globalThis.dispatchEvent(new Event("scroll")));
 
     await waitFor(() => expect(panel.style.translate).toBe("0px -78px"));
   });

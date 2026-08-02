@@ -13,16 +13,16 @@ describe("virtualizer adapters", () => {
     expect(scrollToIndex).toHaveBeenCalledWith(12, { align: "center" });
   });
 
-  it("supports React Window v1 list handles", () => {
+  it("supports React Window v1 list handles", async () => {
     const scrollToItem = vi.fn();
     const adapter = reactWindowAdapter({ scrollToItem });
 
-    adapter.scrollToIndex(24, { align: "end" });
+    await adapter.scrollToIndex(24, { align: "end" });
 
     expect(scrollToItem).toHaveBeenCalledWith(24, "end");
   });
 
-  it("supports React Window v2 refs and resolves them lazily", () => {
+  it("supports React Window v2 refs and resolves them lazily", async () => {
     const scrollToRow = vi.fn();
     const ref: { current: { scrollToRow: typeof scrollToRow } | null } = {
       current: null,
@@ -30,7 +30,7 @@ describe("virtualizer adapters", () => {
     const adapter = reactWindowAdapter(ref);
     ref.current = { scrollToRow };
 
-    adapter.scrollToIndex(36, { align: "center" });
+    await adapter.scrollToIndex(36, { align: "center" });
 
     expect(scrollToRow).toHaveBeenCalledWith({
       index: 36,
@@ -39,13 +39,13 @@ describe("virtualizer adapters", () => {
     });
   });
 
-  it("supports React Virtuoso refs", () => {
+  it("supports React Virtuoso refs", async () => {
     const scrollToIndex = vi.fn();
     const adapter = reactVirtuosoAdapter({
       current: { scrollToIndex },
     });
 
-    adapter.scrollToIndex(48, { align: "start" });
+    await adapter.scrollToIndex(48, { align: "start" });
 
     expect(scrollToIndex).toHaveBeenCalledWith({
       index: 48,
@@ -54,11 +54,11 @@ describe("virtualizer adapters", () => {
     });
   });
 
-  it("maps generic auto alignment to Virtuoso center alignment", () => {
+  it("maps generic auto alignment to Virtuoso center alignment", async () => {
     const scrollToIndex = vi.fn();
     const adapter = reactVirtuosoAdapter({ scrollToIndex });
 
-    adapter.scrollToIndex(60, { align: "auto" });
+    await adapter.scrollToIndex(60, { align: "auto" });
 
     expect(scrollToIndex).toHaveBeenCalledWith({
       index: 60,

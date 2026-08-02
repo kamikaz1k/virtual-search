@@ -526,11 +526,17 @@ truthful.
 
 ```sh
 pnpm install
+pnpm lint
 pnpm test
 pnpm typecheck
 pnpm build
+pnpm check
 pnpm dev
 ```
+
+The workspace uses the native TypeScript 7 compiler and type-aware Oxlint.
+`pnpm check` runs linting, typechecking, every workspace test suite, and both
+production builds; it is also the deployment quality gate.
 
 `pnpm dev` prints the local URL, normally `http://localhost:5173`. Do not open
 `apps/demo/dist/index.html` directly: module workers and generated assets must
