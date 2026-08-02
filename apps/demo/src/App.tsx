@@ -17,6 +17,7 @@ import { createMainThreadExecutor } from "virtual-search";
 import { createWorkerExecutor } from "virtual-search/worker";
 import { CustomSearchPanel } from "./CustomSearchPanel";
 import { getStressDataset, standardDataset } from "./data";
+import { DemoSiteFooter, DemoSiteHeader } from "./DemoChrome";
 import { CustomerList, OrderList } from "./VirtualList";
 
 const DiffDemo = lazy(() =>
@@ -197,7 +198,9 @@ function RecordsSearchSurface({
         : {})}
     >
       <SearchControls />
+      <DemoSiteHeader current="features" />
       <main ref={rootRef}>{children}</main>
+      <DemoSiteFooter current="features" />
     </VirtualSearchProvider>
   );
 }
@@ -217,19 +220,6 @@ function RecordsDemo() {
       key={inputValueOverlayEnabled ? "input-overlay-on" : "input-overlay-off"}
       inputValueOverlayEnabled={inputValueOverlayEnabled}
     >
-        <nav className="demo-browser" aria-label="Demo browser">
-          <span className="demo-browser-label">Demo browser</span>
-          <span className="demo-browser-current" aria-current="page">
-            <span>01</span>
-            Virtual records
-          </span>
-          <a className="demo-browser-link" href={diffDemoHref}>
-            <span>02</span>
-            Diff viewer
-            <span className="demo-browser-link-detail">Virtualized patch ↗</span>
-          </a>
-        </nav>
-
         <header className="hero">
           <div className="hero-kicker">
             <span>Virtual Search</span>
@@ -294,13 +284,6 @@ function RecordsDemo() {
 
         <OrderList items={dataset.orders} />
 
-        <footer>
-          <span>{dataset.total.toLocaleString()} virtual records</span>
-          <span>One ordered search surface</span>
-          <a className="demo-route-link" href={diffDemoHref}>
-            Continue to diff viewer <span aria-hidden="true">↗</span>
-          </a>
-        </footer>
     </RecordsSearchSurface>
   );
 }

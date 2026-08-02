@@ -8,8 +8,9 @@ and reports a complete `X of Y` count across multiple independent lists.
 The browser's Find panel cannot be extended or queried by page JavaScript, so
 Virtual Search uses an opt-in keyboard shortcut and an in-page search panel.
 
-Try the [**Feature Demonstration**](https://kamikaz1k.github.io/virtual-search/)
-or the [**Performance Demonstration**](https://kamikaz1k.github.io/virtual-search/diff/).
+Try the [**Feature Demonstration**](https://kamikaz1k.github.io/virtual-search/),
+the [**Performance Demonstration**](https://kamikaz1k.github.io/virtual-search/diff/),
+or the [**Vue Integration Demonstration**](https://kamikaz1k.github.io/virtual-search/vue/).
 
 It also handles several cases that are easy for a custom Find implementation to
 miss:
@@ -79,6 +80,40 @@ around the headless state and the `open`, `close`, `setQuery`, `next`,
 
 Opening or refocusing Find does not move the page. Navigation happens when the
 query changes or the user explicitly requests another result.
+
+### Vue
+
+Call `provideVirtualSearch()` in the component that owns the searchable root.
+The returned object is shallow-reactive, so its state can be read directly in
+scripts and templates:
+
+```vue
+<script setup lang="ts">
+import { ref } from "vue";
+import {
+  provideVirtualSearch,
+  SearchPanel,
+  useFindShortcut,
+} from "virtual-search/vue";
+
+const root = ref<HTMLElement | null>(null);
+const search = provideVirtualSearch({ root });
+useFindShortcut({ search });
+</script>
+
+<template>
+  <SearchPanel />
+  <main ref="root">
+    <p>Ordinary DOM is searchable automatically.</p>
+    <CustomerList />
+    <OrderList />
+  </main>
+</template>
+```
+
+Descendant components can call `useVirtualSearch()`, `useFindShortcut()`, and
+`useVirtualSearchRegion()` without passing `search`. Provider and consumer
+composables must run synchronously during `setup()`.
 
 ### React + TanStack Virtual
 
@@ -188,7 +223,8 @@ text must correspond to that authoritative search string.
 ### Integrations and execution
 
 - Framework-neutral TypeScript controller and region interfaces.
-- React provider, hooks, and reference search panel.
+- React provider and hooks, Vue composables, and reference search panels for
+  both frameworks.
 - Adapters for TanStack Virtual, React Window v1/v2, React Virtuoso, and
   callback-driven virtualizers.
 - Main-thread execution by default and an optional persistent Web Worker
@@ -361,6 +397,56 @@ records demo includes an **Input text highlight** switch for comparing both
 modes.
 
 ### Use another virtualizer
+
+Vue virtual lists use the same `VirtualizerAdapter` contract. Bind the returned
+attributes to the scroll region, rendered rows, and searchable parts:
+
+```vue
+<script setup lang="ts">
+import { ref } from "vue";
+import {
+  callbackVirtualizerAdapter,
+  useVirtualSearchRegion,
+} from "virtual-search/vue";
+
+const anchor = ref<Element | null>(null);
+const customers = ref<Customer[]>([]);
+const search = useVirtualSearchRegion({
+  id: "customers",
+  anchorRef: anchor,
+  items: customers,
+  getKey: customer => customer.id,
+  getSearchParts: customer => [
+    { id: "name", text: customer.name },
+    { id: "email", text: customer.email },
+  ],
+  virtualizer: callbackVirtualizerAdapter(
+    (index, options) => virtualizer.scrollToIndex(index, options),
+  ),
+});
+</script>
+
+<template>
+  <div ref="anchor" v-bind="search.regionAttrs">
+    <div
+      v-for="customer in renderedCustomers"
+      :key="customer.id"
+      v-bind="search.itemAttrs(customer.id)"
+    >
+      <strong v-bind="search.partAttrs(customer.id, 'name')">
+        {{ customer.name }}
+      </strong>
+      <span v-bind="search.partAttrs(customer.id, 'email')">
+        {{ customer.email }}
+      </span>
+    </div>
+  </div>
+</template>
+```
+
+Replace the `items` ref rather than mutating a plain array in place so the
+composable can invalidate the corpus. For application-specific updates, call
+`useVirtualSearchController().invalidate(regionId)` explicitly.
 
 #### React Window
 

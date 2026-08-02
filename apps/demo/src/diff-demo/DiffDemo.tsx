@@ -10,6 +10,7 @@ import {
   VirtualSearchProvider,
 } from "virtual-search/react";
 import { CustomSearchPanel } from "../CustomSearchPanel";
+import { DemoSiteFooter, DemoSiteHeader } from "../DemoChrome";
 import { createDiffDemoData, type DiffDemoData } from "./diffCorpus";
 import { FULL_DIFF_METADATA, loadFullDiff } from "./fixture";
 import { useCodeViewSearchRegion } from "./useCodeViewSearchRegion";
@@ -248,7 +249,6 @@ export function DiffDemo() {
 
 function LoadedDiffDemo({ demoData }: { demoData: DiffDemoData }) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const recordsHref = import.meta.env.BASE_URL;
   const allocatorMatches = demoData.units.reduce(
     (count, unit) => count + unit.parts.filter(
       part => part.text.toLowerCase().includes("allocator"),
@@ -266,38 +266,7 @@ function LoadedDiffDemo({ demoData }: { demoData: DiffDemoData }) {
       scrollMargin={80}
     >
       <div className="diff-demo">
-        <header className="diff-topbar">
-          <a className="diff-brand" href={recordsHref} aria-label="Virtual Search">
-            <span className="diff-brand-mark">VS</span>
-            <span>
-              Virtual Search
-              <small>Integration specimen 02</small>
-            </span>
-          </a>
-          <div className="diff-repo-path">
-            <a
-              className="diff-repo-link"
-              href={sourceGitHubUrl}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <span>oven-sh</span>
-              <span>/</span>
-              <strong>bun</strong>
-            </a>
-            <a
-              className="diff-pr-pill"
-              href={sourceGitHubUrl}
-              target="_blank"
-              rel="noreferrer"
-            >
-              PR #30412 ↗
-            </a>
-          </div>
-          <a className="diff-demo-switch" href={recordsHref}>
-            Records demo <span aria-hidden="true">↗</span>
-          </a>
-        </header>
+        <DemoSiteHeader current="performance" theme="dark" />
 
         <section className="diff-summary">
           <div className="diff-summary-copy">
@@ -355,6 +324,7 @@ function LoadedDiffDemo({ demoData }: { demoData: DiffDemoData }) {
         </section>
 
         <DiffWorkspace demoData={demoData} scrollRef={scrollRef} />
+        <DemoSiteFooter current="performance" theme="dark" />
         <SearchControls demoData={demoData} />
       </div>
     </VirtualSearchProvider>

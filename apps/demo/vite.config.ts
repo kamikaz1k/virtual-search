@@ -1,9 +1,10 @@
 import react from "@vitejs/plugin-react";
+import vue from "@vitejs/plugin-vue";
 import { defineConfig } from "vite";
 
 export default defineConfig(({ command }) => ({
   base: command === "build" ? "/virtual-search/" : "/",
-  plugins: [react()],
+  plugins: [react(), vue()],
   resolve: {
     alias: [
       {
@@ -24,6 +25,13 @@ export default defineConfig(({ command }) => ({
         find: /^virtual-search\/tanstack$/,
         replacement: new URL(
           "../../packages/virtual-search/src/tanstack/index.ts",
+          import.meta.url,
+        ).pathname,
+      },
+      {
+        find: /^virtual-search\/vue$/,
+        replacement: new URL(
+          "../../packages/virtual-search/src/vue/index.ts",
           import.meta.url,
         ).pathname,
       },

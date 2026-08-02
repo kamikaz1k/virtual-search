@@ -41,6 +41,8 @@ jobs:
         run: |
           mkdir -p apps/demo/dist/diff
           cp apps/demo/dist/index.html apps/demo/dist/diff/index.html
+          mkdir -p apps/demo/dist/vue
+          cp apps/demo/dist/index.html apps/demo/dist/vue/index.html
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5

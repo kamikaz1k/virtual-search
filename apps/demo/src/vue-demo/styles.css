@@ -1,0 +1,338 @@
+@keyframes vue-rise {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+:root {
+  --vue-ink: #17251f;
+  --vue-paper: #f3f0e7;
+  --vue-accent: #00a66b;
+  --vue-accent-dark: #006e49;
+  --vue-rule: rgba(23, 37, 31, 0.2);
+}
+
+* { box-sizing: border-box; }
+
+html { background: var(--vue-paper); }
+
+body {
+  margin: 0;
+  color: var(--vue-ink);
+  background:
+    linear-gradient(90deg, transparent 49.9%, rgba(23, 37, 31, 0.035) 50%, transparent 50.1%),
+    var(--vue-paper);
+  font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif;
+}
+
+.vue-demo-shell { min-height: 100vh; }
+
+.vue-demo-main {
+  width: min(1180px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 24px 0 56px;
+}
+
+.vue-demo-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: fit-content;
+  margin-left: auto;
+  padding: 4px;
+  border: 1px solid var(--vue-rule);
+  background: rgba(243, 240, 231, 0.88);
+  backdrop-filter: blur(14px);
+  font: 700 11px/1.2 "SFMono-Regular", Consolas, monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.vue-demo-nav a,
+.vue-demo-nav span {
+  padding: 10px 13px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.vue-demo-nav a:hover { background: rgba(0, 166, 107, 0.1); }
+
+.vue-demo-nav [aria-current="page"] {
+  color: white;
+  background: var(--vue-ink);
+}
+
+.vue-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: clamp(40px, 8vw, 110px);
+  align-items: end;
+  min-height: 650px;
+  padding: 90px 3vw 80px;
+  border-bottom: 1px solid var(--vue-ink);
+}
+
+.vue-hero-copy,
+.vue-proof-card,
+.vue-static-proof,
+.vue-directory { animation: vue-rise 560ms both; }
+
+.vue-framework-mark,
+.vue-eyebrow,
+.vue-proof-label {
+  display: block;
+  color: var(--vue-accent-dark);
+  font: 800 11px/1.2 "SFMono-Regular", Consolas, monospace;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.vue-hero h1 {
+  max-width: 800px;
+  margin: 26px 0 30px;
+  font: 400 clamp(58px, 8.4vw, 118px)/0.82 "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  letter-spacing: -0.065em;
+}
+
+.vue-hero h1 em { color: var(--vue-accent-dark); font-weight: 400; }
+
+.vue-hero-copy > p {
+  max-width: 590px;
+  margin: 0 0 30px;
+  font-size: clamp(17px, 1.7vw, 21px);
+  line-height: 1.55;
+}
+
+.vue-hero-action,
+.vue-open-search {
+  border: 0;
+  color: white;
+  background: var(--vue-ink);
+  font: 800 12px/1 "SFMono-Regular", Consolas, monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.vue-hero-action {
+  display: inline-flex;
+  gap: 42px;
+  padding: 18px 20px;
+  transition: gap 180ms ease, background 180ms ease;
+}
+
+.vue-hero-action:hover { gap: 54px; background: var(--vue-accent-dark); }
+
+.vue-proof-card {
+  position: relative;
+  padding: 28px;
+  color: white;
+  background: var(--vue-accent-dark);
+  box-shadow: 18px 18px 0 var(--vue-ink);
+  animation-delay: 100ms;
+}
+
+.vue-proof-card::before {
+  content: "";
+  position: absolute;
+  inset: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  pointer-events: none;
+}
+
+.vue-proof-card .vue-proof-label { color: rgba(255, 255, 255, 0.72); }
+
+.vue-proof-card > strong {
+  display: block;
+  margin-top: 42px;
+  font: 400 68px/1 "Iowan Old Style", Georgia, serif;
+  letter-spacing: -0.05em;
+}
+
+.vue-proof-card > p { max-width: 220px; line-height: 1.5; }
+
+.vue-proof-card dl { margin: 40px 0 0; }
+
+.vue-proof-card dl div {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.3);
+  font-size: 12px;
+}
+
+.vue-proof-card dt { opacity: 0.7; }
+.vue-proof-card dd { margin: 0; font-weight: 800; }
+
+.vue-static-proof {
+  display: grid;
+  grid-template-columns: 0.7fr 1.4fr 0.9fr;
+  gap: 42px;
+  align-items: start;
+  padding: 80px 3vw;
+  border-bottom: 1px solid var(--vue-rule);
+  animation-delay: 160ms;
+}
+
+.vue-static-proof h2,
+.vue-directory h2 {
+  margin: 0;
+  font: 400 clamp(32px, 4vw, 54px)/0.98 "Iowan Old Style", Georgia, serif;
+  letter-spacing: -0.045em;
+}
+
+.vue-static-proof p { margin: 0; font-size: 16px; line-height: 1.65; }
+
+.vue-static-proof label span {
+  display: block;
+  margin-bottom: 8px;
+  font: 700 10px/1.2 "SFMono-Regular", Consolas, monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.vue-static-proof input {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid var(--vue-ink);
+  border-radius: 0;
+  padding: 0 14px;
+  color: inherit;
+  background: transparent;
+  font: 600 16px/1 "Avenir Next", sans-serif;
+}
+
+.vue-directory { padding: 86px 3vw; animation-delay: 220ms; }
+
+.vue-directory-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 30px;
+  margin-bottom: 30px;
+}
+
+.vue-directory-header .vue-eyebrow { margin-bottom: 14px; }
+
+.vue-record-count { display: flex; align-items: baseline; gap: 8px; }
+.vue-record-count strong { font: 400 44px/1 Georgia, serif; }
+.vue-record-count span { font: 700 10px/1 monospace; text-transform: uppercase; }
+
+.vue-virtual-surface {
+  height: min(62vh, 590px);
+  overflow: auto;
+  border: 1px solid var(--vue-ink);
+  background: rgba(255, 255, 255, 0.34);
+  scrollbar-color: var(--vue-accent) transparent;
+}
+
+.vue-virtual-track { position: relative; width: 100%; }
+
+.vue-customer-row {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  grid-template-columns: 90px 1fr 1.35fr 0.7fr;
+  align-items: center;
+  width: 100%;
+  padding: 0 22px;
+  border-bottom: 1px solid var(--vue-rule);
+}
+
+.vue-customer-row:hover { background: rgba(0, 166, 107, 0.08); }
+
+.vue-row-number,
+.vue-row-city {
+  font: 700 11px/1 "SFMono-Regular", Consolas, monospace;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.vue-row-number { color: var(--vue-accent-dark); }
+.vue-row-email { color: rgba(23, 37, 31, 0.65); font-size: 13px; }
+.vue-row-city { text-align: right; }
+
+.vue-open-search {
+  position: fixed;
+  z-index: 30;
+  right: 18px;
+  bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 14px 16px;
+  box-shadow: 7px 7px 0 var(--vue-accent);
+}
+
+.vue-open-search kbd { color: rgba(255, 255, 255, 0.7); font: inherit; }
+
+.vue-search-panel {
+  position: fixed;
+  z-index: 40;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  grid-template-columns: minmax(170px, 300px) auto repeat(3, 36px);
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--vue-ink);
+  color: var(--vue-ink);
+  background: rgba(243, 240, 231, 0.97);
+  box-shadow: 8px 8px 0 var(--vue-accent);
+}
+
+.vue-search-panel label { display: contents; }
+.vue-search-panel .virtual-search-visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.vue-search-panel input { min-width: 0; height: 36px; border: 1px solid var(--vue-rule); padding: 0 10px; font-size: 16px; background: white; }
+.vue-search-panel output { min-width: 74px; text-align: center; font: 700 11px/1 monospace; }
+.vue-search-panel button { width: 36px; height: 36px; border: 1px solid var(--vue-rule); background: transparent; cursor: pointer; }
+.vue-search-panel button:hover:not(:disabled) { color: white; background: var(--vue-ink); }
+
+.vue-demo-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  margin: 0 3vw;
+  padding: 24px 0;
+  border-top: 1px solid var(--vue-ink);
+  font: 700 11px/1.3 "SFMono-Regular", Consolas, monospace;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.vue-demo-footer a { color: var(--vue-accent-dark); }
+
+@media (max-width: 760px) {
+  .vue-demo-main { width: min(100% - 24px, 1180px); padding-top: 12px; }
+  .vue-demo-nav { margin: 0; width: 100%; overflow-x: auto; }
+  .vue-demo-nav a, .vue-demo-nav span { white-space: nowrap; }
+  .vue-hero { grid-template-columns: 1fr; min-height: 0; padding: 72px 4px 64px; }
+  .vue-hero h1 { font-size: clamp(54px, 17vw, 82px); }
+  .vue-proof-card { margin-right: 14px; }
+  .vue-static-proof { grid-template-columns: 1fr; gap: 24px; padding: 60px 4px; }
+  .vue-directory { padding: 64px 4px; }
+  .vue-directory-header { align-items: start; }
+  .vue-directory h2 { font-size: 36px; }
+  .vue-record-count { flex-direction: column; gap: 2px; text-align: right; }
+  .vue-record-count strong { font-size: 32px; }
+  .vue-customer-row { grid-template-columns: 54px 1fr auto; padding: 0 12px; }
+  .vue-row-email { display: none; }
+  .vue-search-panel {
+    right: 6px;
+    left: 6px;
+    grid-template-columns: minmax(120px, 1fr) auto repeat(3, 34px);
+    gap: 3px;
+    padding: 5px;
+    box-shadow: 4px 4px 0 var(--vue-accent);
+  }
+  .vue-search-panel input { width: 100%; height: 34px; }
+  .vue-search-panel output { min-width: 58px; font-size: 10px; }
+  .vue-search-panel button { width: 34px; height: 34px; }
+  .vue-open-search { right: 12px; bottom: 12px; }
+  .vue-demo-footer { flex-direction: column; margin: 0 4px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
