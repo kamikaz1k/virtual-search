@@ -115,6 +115,111 @@ Descendant components can call `useVirtualSearch()`, `useFindShortcut()`, and
 `useVirtualSearchRegion()` without passing `search`. Provider and consumer
 composables must run synchronously during `setup()`.
 
+### Vue + TanStack Virtual
+
+The provider makes ordinary DOM searchable, but a virtual list must also
+register its complete data set with `useVirtualSearchRegion()`. This is what
+allows records that are not currently mounted to appear in the result count.
+
+The returned bindings connect the searchable corpus back to the elements that
+the virtualizer eventually renders:
+
+- `regionAttrs` goes on the virtualizer's scroll element.
+- `itemAttrs(key)` goes on each mounted row.
+- `partAttrs(key, partId)` goes on the element that renders each indexed part.
+
+```vue
+<script setup lang="ts">
+import { useVirtualizer } from "@tanstack/vue-virtual";
+import { computed, ref } from "vue";
+import {
+  callbackVirtualizerAdapter,
+  useVirtualSearchRegion,
+} from "virtual-search/vue";
+
+const props = defineProps<{ customers: readonly Customer[] }>();
+const scrollElement = ref<HTMLElement | null>(null);
+const customers = computed(() => props.customers);
+
+const virtualizer = useVirtualizer(computed(() => ({
+  count: customers.value.length,
+  getScrollElement: () => scrollElement.value,
+  estimateSize: () => 56,
+  overscan: 6,
+})));
+
+const virtualRows = computed(() => virtualizer.value.getVirtualItems());
+const totalSize = computed(() => virtualizer.value.getTotalSize());
+
+const search = useVirtualSearchRegion({
+  id: "customers",
+  anchorRef: scrollElement,
+  items: customers,
+  getKey: customer => customer.id,
+  getSearchParts: customer => [
+    { id: "name", text: customer.name },
+    { id: "email", text: customer.email },
+  ],
+  virtualizer: callbackVirtualizerAdapter((index, options) => {
+    virtualizer.value.scrollToIndex(index, { align: options.align });
+  }),
+});
+
+function customerAt(index: number) {
+  return customers.value[index];
+}
+</script>
+
+<template>
+  <div
+    ref="scrollElement"
+    v-bind="search.regionAttrs"
+    style="height: 400px; overflow: auto"
+  >
+    <div :style="{ height: `${totalSize}px`, position: 'relative' }">
+      <template v-for="virtualRow in virtualRows" :key="virtualRow.key">
+        <div
+          v-if="customerAt(virtualRow.index)"
+          v-bind="search.itemAttrs(customerAt(virtualRow.index)!.id)"
+          :style="{
+            position: 'absolute',
+            width: '100%',
+            height: `${virtualRow.size}px`,
+            transform: `translateY(${virtualRow.start}px)`,
+          }"
+        >
+          <strong
+            v-bind="search.partAttrs(
+              customerAt(virtualRow.index)!.id,
+              'name',
+            )"
+          >
+            {{ customerAt(virtualRow.index)!.name }}
+          </strong>
+          <span
+            v-bind="search.partAttrs(
+              customerAt(virtualRow.index)!.id,
+              'email',
+            )"
+          >
+            {{ customerAt(virtualRow.index)!.email }}
+          </span>
+        </div>
+      </template>
+    </div>
+  </div>
+</template>
+```
+
+`getSearchParts()` is the authoritative text for every record, including
+unmounted ones. When a result is selected, the adapter scrolls to its index;
+Virtual Search then waits for the row identified by `itemAttrs()` to mount and
+highlights the element identified by `partAttrs()`.
+
+For a single text value, use `getText` instead of `getSearchParts`. Replace the
+`items` ref or computed value when the data set changes so the corpus is
+invalidated automatically.
+
 ### React + TanStack Virtual
 
 Register each virtual list with `useVirtualSearchRegion()` so its unmounted
@@ -398,54 +503,20 @@ modes.
 
 ### Use another virtualizer
 
-Vue virtual lists use the same `VirtualizerAdapter` contract. Bind the returned
-attributes to the scroll region, rendered rows, and searchable parts:
+Every integration ultimately uses the same `VirtualizerAdapter` contract. If a
+dedicated adapter is not provided, wrap the virtualizer's scroll method:
 
-```vue
-<script setup lang="ts">
-import { ref } from "vue";
-import {
-  callbackVirtualizerAdapter,
-  useVirtualSearchRegion,
-} from "virtual-search/vue";
+```ts
+import { callbackVirtualizerAdapter } from "virtual-search";
 
-const anchor = ref<Element | null>(null);
-const customers = ref<Customer[]>([]);
-const search = useVirtualSearchRegion({
-  id: "customers",
-  anchorRef: anchor,
-  items: customers,
-  getKey: customer => customer.id,
-  getSearchParts: customer => [
-    { id: "name", text: customer.name },
-    { id: "email", text: customer.email },
-  ],
-  virtualizer: callbackVirtualizerAdapter(
-    (index, options) => virtualizer.scrollToIndex(index, options),
-  ),
+const adapter = callbackVirtualizerAdapter((index, { align }) => {
+  return virtualizer.scrollToIndex(index, { align });
 });
-</script>
-
-<template>
-  <div ref="anchor" v-bind="search.regionAttrs">
-    <div
-      v-for="customer in renderedCustomers"
-      :key="customer.id"
-      v-bind="search.itemAttrs(customer.id)"
-    >
-      <strong v-bind="search.partAttrs(customer.id, 'name')">
-        {{ customer.name }}
-      </strong>
-      <span v-bind="search.partAttrs(customer.id, 'email')">
-        {{ customer.email }}
-      </span>
-    </div>
-  </div>
-</template>
 ```
 
-Replace the `items` ref rather than mutating a plain array in place so the
-composable can invalidate the corpus. For application-specific updates, call
+The callback may return immediately or return a promise. Pass `adapter` as the
+`virtualizer` option to the React or Vue region registration. For
+application-specific data changes, call
 `useVirtualSearchController().invalidate(regionId)` explicitly.
 
 #### React Window
