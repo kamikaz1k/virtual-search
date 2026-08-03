@@ -9,11 +9,11 @@ import {
   ITEM_ATTRIBUTE,
   PART_ATTRIBUTE,
   REGION_ATTRIBUTE,
-} from "../corpus";
-import { nextFrame, waitForRenderedItem } from "../region-dom";
-import type { SearchTextPart, VirtualSearchRegion } from "../types";
-import type { VirtualizerAdapter } from "../virtualizer";
-import { useVirtualSearchController } from "./context";
+} from "../corpus.js";
+import { nextFrame, waitForRenderedItem } from "../region-dom.js";
+import type { SearchTextPart, VirtualSearchRegion } from "../types.js";
+import type { VirtualizerAdapter } from "../virtualizer.js";
+import { useVirtualSearchController } from "./context.js";
 
 type RegionAnchor =
   | {

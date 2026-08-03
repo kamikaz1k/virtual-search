@@ -8,12 +8,12 @@ import {
   toValue,
   type MaybeRefOrGetter,
 } from "vue";
-import { createVirtualSearch } from "../controller";
+import { createVirtualSearch } from "../controller.js";
 import type {
   SearchState,
   VirtualSearchController,
   VirtualSearchOptions,
-} from "../types";
+} from "../types.js";
 
 export interface ProvideVirtualSearchOptions extends Omit<
   VirtualSearchOptions,

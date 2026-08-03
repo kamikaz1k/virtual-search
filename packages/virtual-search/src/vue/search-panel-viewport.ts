@@ -7,9 +7,9 @@ import {
 import {
   attachSearchPanelViewport,
   type SearchPanelViewportAnchor,
-} from "../search-panel-viewport";
+} from "../search-panel-viewport.js";
 
-export type { SearchPanelViewportAnchor } from "../search-panel-viewport";
+export type { SearchPanelViewportAnchor } from "../search-panel-viewport.js";
 
 export interface SearchPanelViewportOptions {
   anchor?: MaybeRefOrGetter<SearchPanelViewportAnchor>;

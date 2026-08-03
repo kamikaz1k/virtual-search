@@ -2,7 +2,7 @@ import type {
   SearchDocument,
   SearchOccurrence,
   SearchOptions,
-} from "./types";
+} from "./types.js";
 
 interface NormalizedSource {
   text: string;

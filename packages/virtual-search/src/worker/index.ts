@@ -2,8 +2,8 @@ import type {
   SearchDocument,
   SearchExecutor,
   SearchOccurrence,
-} from "../types";
-import type { WorkerRequest, WorkerResponse } from "./protocol";
+} from "../types.js";
+import type { WorkerRequest, WorkerResponse } from "./protocol.js";
 
 export interface WorkerSearchExecutorOptions {
   worker: Worker;

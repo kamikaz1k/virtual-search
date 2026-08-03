@@ -1,5 +1,5 @@
 import type { Virtualizer } from "@tanstack/react-virtual";
-import type { VirtualizerAdapter } from "../virtualizer";
+import type { VirtualizerAdapter } from "../virtualizer.js";
 
 export function tanstackVirtualAdapter<
   ScrollElement extends Element | Window,

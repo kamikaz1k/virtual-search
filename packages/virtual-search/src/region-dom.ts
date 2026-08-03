@@ -1,4 +1,4 @@
-import { ITEM_ATTRIBUTE } from "./corpus";
+import { ITEM_ATTRIBUTE } from "./corpus.js";
 
 function queryItem(anchor: Element, key: string): Element | null {
   const escape = (

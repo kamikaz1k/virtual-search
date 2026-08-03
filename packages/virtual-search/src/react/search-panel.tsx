@@ -1,9 +1,9 @@
 import { type FormEvent, useEffect, useRef } from "react";
-import { useVirtualSearch } from "./context";
+import { useVirtualSearch } from "./context.js";
 import {
   type SearchPanelViewportAnchor,
   useSearchPanelViewport,
-} from "./search-panel-viewport";
+} from "./search-panel-viewport.js";
 
 export interface SearchPanelProps {
   className?: string;

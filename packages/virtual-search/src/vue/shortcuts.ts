@@ -7,7 +7,7 @@ import {
 import {
   useVirtualSearch,
   type VirtualSearchValue,
-} from "./context";
+} from "./context.js";
 
 export interface FindShortcutOptions {
   enabled?: MaybeRefOrGetter<boolean>;

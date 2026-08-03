@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useVirtualSearchController } from "./context";
+import { useVirtualSearchController } from "./context.js";
 
 export interface FindShortcutOptions {
   enabled?: boolean;

@@ -1,5 +1,5 @@
-import type { InputValueMatch } from "./corpus";
-import type { InputValueHighlightingOptions } from "./types";
+import type { InputValueMatch } from "./corpus.js";
+import type { InputValueHighlightingOptions } from "./types.js";
 
 interface PaintedInputValueMatch extends InputValueMatch {
   active: boolean;

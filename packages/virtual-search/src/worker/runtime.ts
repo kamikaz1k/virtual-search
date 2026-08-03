@@ -1,8 +1,8 @@
 /// <reference lib="webworker" />
 
-import { findOccurrences } from "../matcher";
-import type { SearchDocument, SearchOccurrence } from "../types";
-import type { WorkerRequest, WorkerResponse } from "./protocol";
+import { findOccurrences } from "../matcher.js";
+import type { SearchDocument, SearchOccurrence } from "../types.js";
+import type { WorkerRequest, WorkerResponse } from "./protocol.js";
 
 const workerScope = self as unknown as DedicatedWorkerGlobalScope;
 let corpus: readonly SearchDocument[] = [];

@@ -4,16 +4,16 @@ import {
   occurrenceIdentity,
   type InputValueMatch,
   type PreparedCorpus,
-} from "./corpus";
-import { SearchDiagnostics } from "./diagnostics";
-import { createMainThreadExecutor } from "./executors/main-thread";
+} from "./corpus.js";
+import { SearchDiagnostics } from "./diagnostics.js";
+import { createMainThreadExecutor } from "./executors/main-thread.js";
 import {
   activeHighlightName,
   passiveHighlightName,
   SearchHighlighter,
-} from "./highlighter";
-import { InputValueHighlighter } from "./input-value-highlighter";
-import { VirtualSearchRevealError } from "./types";
+} from "./highlighter.js";
+import { InputValueHighlighter } from "./input-value-highlighter.js";
+import { VirtualSearchRevealError } from "./types.js";
 import type {
   SearchOccurrence,
   SearchState,
@@ -21,7 +21,7 @@ import type {
   VirtualSearchController,
   VirtualSearchOptions,
   VirtualSearchRegion,
-} from "./types";
+} from "./types.js";
 
 const initialState: SearchState = {
   isOpen: false,

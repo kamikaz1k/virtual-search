@@ -1,7 +1,7 @@
 import type {
   VirtualizerAdapter,
   VirtualizerAlignment,
-} from "../virtualizer";
+} from "../virtualizer.js";
 
 type VirtuosoAlignment = Exclude<VirtualizerAlignment, "auto">;
 

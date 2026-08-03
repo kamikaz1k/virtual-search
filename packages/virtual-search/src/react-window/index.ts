@@ -1,7 +1,7 @@
 import type {
   VirtualizerAdapter,
   VirtualizerAlignment,
-} from "../virtualizer";
+} from "../virtualizer.js";
 
 export interface ReactWindowV1ListHandle {
   scrollToItem(index: number, align?: VirtualizerAlignment | "smart"): void;

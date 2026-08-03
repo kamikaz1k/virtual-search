@@ -2,12 +2,12 @@ import { type RefObject, useEffect } from "react";
 import {
   attachSearchPanelViewport,
   type SearchPanelViewportOptions,
-} from "../search-panel-viewport";
+} from "../search-panel-viewport.js";
 
 export type {
   SearchPanelViewportAnchor,
   SearchPanelViewportOptions,
-} from "../search-panel-viewport";
+} from "../search-panel-viewport.js";
 
 export function useSearchPanelViewport<ElementType extends HTMLElement>(
   panelRef: RefObject<ElementType | null>,

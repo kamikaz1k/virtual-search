@@ -6,11 +6,11 @@ import {
   shallowRef,
   watch,
 } from "vue";
-import { useVirtualSearch } from "./context";
+import { useVirtualSearch } from "./context.js";
 import {
   type SearchPanelViewportAnchor,
   useSearchPanelViewport,
-} from "./search-panel-viewport";
+} from "./search-panel-viewport.js";
 
 export const SearchPanel = defineComponent({
   name: "VirtualSearchPanel",

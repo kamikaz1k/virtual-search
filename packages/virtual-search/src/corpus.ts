@@ -3,14 +3,14 @@ import {
   DomTextBuilder,
   textMapForElement,
   type DomTextMap,
-} from "./dom-text";
+} from "./dom-text.js";
 import type {
   LocateContext,
   SearchDocument,
   SearchOccurrence,
   SearchUnit,
   VirtualSearchRegion,
-} from "./types";
+} from "./types.js";
 
 export const REGION_ATTRIBUTE = "data-virtual-search-region";
 export const ITEM_ATTRIBUTE = "data-virtual-search-item";

@@ -7,12 +7,12 @@ import {
   useRef,
   useSyncExternalStore,
 } from "react";
-import { createVirtualSearch } from "../controller";
+import { createVirtualSearch } from "../controller.js";
 import type {
   SearchState,
   VirtualSearchController,
   VirtualSearchOptions,
-} from "../types";
+} from "../types.js";
 
 const VirtualSearchContext = createContext<VirtualSearchController | null>(null);
 

@@ -29,16 +29,36 @@ miss:
 
 ### Install
 
-The package is not published yet: npm publishing still needs to be configured,
-and [`packages/virtual-search/package.json`](packages/virtual-search/package.json)
-is currently marked `private`. Once the first release is available, installation
-will be:
+The first npm release has not been published yet. Once it is available, install
+the core package without pulling in a framework:
 
 ```sh
 npm install virtual-search
 ```
 
-Until then, clone this repository and use the workspace package through pnpm.
+React, Vue, and TanStack Virtual are optional peer dependencies, so npm only
+installs the framework-specific packages you explicitly choose:
+
+```sh
+# React (omit react and react-dom if your app already has them)
+npm install virtual-search react react-dom
+
+# Vue (omit vue if your app already has it)
+npm install virtual-search vue
+
+# TanStack React Virtual adapter
+npm install virtual-search react react-dom @tanstack/react-virtual
+
+# Vue + TanStack Virtual (uses the callback adapter)
+npm install virtual-search vue @tanstack/vue-virtual
+```
+
+The React Window and React Virtuoso adapters use structural ref types and do
+not add runtime dependencies. Install `react-window` or `react-virtuoso` only
+when your application uses that virtualizer.
+
+Until the first release, clone this repository and use the workspace package
+through pnpm.
 
 ### React
 
@@ -694,6 +714,27 @@ pnpm dev
 The workspace uses the native TypeScript 7 compiler and type-aware Oxlint.
 `pnpm check` runs linting, typechecking, every workspace test suite, and both
 production builds; it is also the deployment quality gate.
+
+### npm releases
+
+The publishable package lives in `packages/virtual-search`. Its npm tarball is
+restricted to compiled output, its package README, its license, and package
+metadata. Preview the exact artifact without publishing:
+
+```sh
+cd packages/virtual-search
+npm pack --dry-run
+```
+
+The first `virtual-search` release must be published by an npm account owner so
+the package exists in the registry. After that bootstrap release, configure
+`publish-npm.yml` as the package's GitHub trusted publisher for repository
+`kamikaz1k/virtual-search`. Publishing a GitHub Release then runs the complete
+quality gate and publishes through short-lived OIDC credentials; no npm token
+is stored in GitHub.
+
+The release tag and `packages/virtual-search/package.json` version must agree.
+An npm package name and version cannot be reused after publication.
 
 `pnpm dev` prints the local URL, normally `http://localhost:5173`. Do not open
 `apps/demo/dist/index.html` directly: module workers and generated assets must

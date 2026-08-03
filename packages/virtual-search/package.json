@@ -1,44 +1,81 @@
 {
   "name": "virtual-search",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
+  "description": "Native-like find-in-page across DOM and virtualized content, with React and Vue integrations.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kamikaz1k/virtual-search.git",
+    "directory": "packages/virtual-search"
+  },
+  "homepage": "https://github.com/kamikaz1k/virtual-search#readme",
+  "bugs": {
+    "url": "https://github.com/kamikaz1k/virtual-search/issues"
+  },
+  "keywords": [
+    "find-in-page",
+    "search",
+    "virtualization",
+    "react",
+    "vue"
+  ],
   "type": "module",
   "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     },
     "./react": {
       "types": "./dist/react/index.d.ts",
-      "import": "./dist/react/index.js"
+      "import": "./dist/react/index.js",
+      "default": "./dist/react/index.js"
     },
     "./react-window": {
       "types": "./dist/react-window/index.d.ts",
-      "import": "./dist/react-window/index.js"
+      "import": "./dist/react-window/index.js",
+      "default": "./dist/react-window/index.js"
     },
     "./react-virtuoso": {
       "types": "./dist/react-virtuoso/index.d.ts",
-      "import": "./dist/react-virtuoso/index.js"
+      "import": "./dist/react-virtuoso/index.js",
+      "default": "./dist/react-virtuoso/index.js"
     },
     "./tanstack": {
       "types": "./dist/tanstack/index.d.ts",
-      "import": "./dist/tanstack/index.js"
+      "import": "./dist/tanstack/index.js",
+      "default": "./dist/tanstack/index.js"
     },
     "./vue": {
       "types": "./dist/vue/index.d.ts",
-      "import": "./dist/vue/index.js"
+      "import": "./dist/vue/index.js",
+      "default": "./dist/vue/index.js"
     },
     "./worker": {
       "types": "./dist/worker/index.d.ts",
-      "import": "./dist/worker/index.js"
+      "import": "./dist/worker/index.js",
+      "default": "./dist/worker/index.js"
     },
     "./worker/runtime": {
-      "import": "./dist/worker/runtime.js"
-    }
+      "types": "./dist/worker/runtime.d.ts",
+      "import": "./dist/worker/runtime.js",
+      "default": "./dist/worker/runtime.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "build": "tsup && tsc -p tsconfig.build.json",
+    "prepack": "pnpm build",
+    "prepublishOnly": "pnpm test && pnpm typecheck",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"
@@ -46,7 +83,6 @@
   "peerDependencies": {
     "@tanstack/react-virtual": "^3.13.0",
     "react": ">=18",
-    "react-dom": ">=18",
     "vue": ">=3.3"
   },
   "peerDependenciesMeta": {
@@ -54,9 +90,6 @@
       "optional": true
     },
     "react": {
-      "optional": true
-    },
-    "react-dom": {
       "optional": true
     },
     "vue": {

@@ -1,0 +1,43 @@
+name: Publish package to npm
+
+on:
+  release:
+    types:
+      - published
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run quality checks
+        run: pnpm check
+
+      - name: Verify release version
+        run: >-
+          node -e "const packageVersion = require('./packages/virtual-search/package.json').version;
+          if ('v' + packageVersion !== process.env.GITHUB_REF_NAME)
+          throw new Error('Release tag must be v' + packageVersion);"
+
+      - name: Publish package
+        run: npm publish
+        working-directory: packages/virtual-search
