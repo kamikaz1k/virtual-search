@@ -1,6 +1,6 @@
 {
   "name": "virtual-search",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Native-like find-in-page across DOM and virtualized content, with React and Vue integrations.",
   "license": "MIT",
   "repository": {

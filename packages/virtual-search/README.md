@@ -4,6 +4,12 @@ Native-like find-in-page across ordinary DOM content and records that have not
 been mounted by a virtualizer. Virtual Search includes framework-agnostic core,
 React, and Vue entry points in one package.
 
+[![Virtual Search finds and navigates matches across ordinary and virtualized content](https://raw.githubusercontent.com/kamikaz1k/virtual-search/main/docs/assets/virtual-search-demo.gif)](https://kamikaz1k.github.io/virtual-search/)
+
+Try the [Feature Demonstration](https://kamikaz1k.github.io/virtual-search/),
+the [Performance Demonstration](https://kamikaz1k.github.io/virtual-search/diff/),
+or the [Vue Integration Demonstration](https://kamikaz1k.github.io/virtual-search/vue/).
+
 ## Install only what you use
 
 The framework and virtualizer integrations are optional peers. Installing the

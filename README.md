@@ -12,6 +12,8 @@ Try the [**Feature Demonstration**](https://kamikaz1k.github.io/virtual-search/)
 the [**Performance Demonstration**](https://kamikaz1k.github.io/virtual-search/diff/),
 or the [**Vue Integration Demonstration**](https://kamikaz1k.github.io/virtual-search/vue/).
 
+[![Virtual Search finds and navigates matches across ordinary and virtualized content](docs/assets/virtual-search-demo.gif)](https://kamikaz1k.github.io/virtual-search/)
+
 It also handles several cases that are easy for a custom Find implementation to
 miss:
 
@@ -29,8 +31,7 @@ miss:
 
 ### Install
 
-The first npm release has not been published yet. Once it is available, install
-the core package without pulling in a framework:
+Install the framework-agnostic core without pulling in a framework:
 
 ```sh
 npm install virtual-search
@@ -56,9 +57,6 @@ npm install virtual-search vue @tanstack/vue-virtual
 The React Window and React Virtuoso adapters use structural ref types and do
 not add runtime dependencies. Install `react-window` or `react-virtuoso` only
 when your application uses that virtualizer.
-
-Until the first release, clone this repository and use the workspace package
-through pnpm.
 
 ### React
 
@@ -726,12 +724,12 @@ cd packages/virtual-search
 npm pack --dry-run
 ```
 
-The first `virtual-search` release must be published by an npm account owner so
-the package exists in the registry. After that bootstrap release, configure
-`publish-npm.yml` as the package's GitHub trusted publisher for repository
-`kamikaz1k/virtual-search`. Publishing a GitHub Release then runs the complete
-quality gate and publishes through short-lived OIDC credentials; no npm token
-is stored in GitHub.
+The package is available as [`virtual-search` on
+npm](https://www.npmjs.com/package/virtual-search). To automate future
+releases, configure `publish-npm.yml` as the package's GitHub trusted publisher
+for repository `kamikaz1k/virtual-search`. Publishing a GitHub Release then
+runs the complete quality gate and publishes through short-lived OIDC
+credentials; no npm token is stored in GitHub.
 
 The release tag and `packages/virtual-search/package.json` version must agree.
 An npm package name and version cannot be reused after publication.
