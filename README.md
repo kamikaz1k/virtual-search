@@ -356,6 +356,11 @@ text must correspond to that authoritative search string.
 - Diagnostics for shadow-root matches that appear to lack visible highlight
   styles, without modifying the host application.
 
+## Known Gaps
+
+See [Native Find-in-Page behavior and Virtual Search parity](NATIVE_FIND_BEHAVIOR.md)
+for known gaps, browser and OS differences, and the proposed conformance matrix.
+
 ## How Highlighting Works
 
 Virtual Search separates finding a match from painting it:
