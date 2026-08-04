@@ -1,9 +1,20 @@
+.diff-demo,
+.diff-fixture-state {
+  --diff-canvas: #080d14;
+}
+
+html:has(.diff-demo),
+html:has(.diff-fixture-state),
+body:has(.diff-demo),
+body:has(.diff-fixture-state) {
+  background: var(--diff-canvas, #080d14);
+}
+
 .diff-demo {
   --diff-ink: #dce5f2;
   --diff-muted: #8290a6;
   --diff-panel: #101722;
   --diff-panel-raised: #151e2c;
-  --diff-canvas: #080d14;
   --diff-rule: #263246;
   --diff-blue: #63a6ff;
   --diff-cyan: #5eead4;
