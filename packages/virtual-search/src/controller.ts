@@ -427,6 +427,12 @@ export function createVirtualSearch(
 
     if (query.length === 0) return;
 
+    // Let controlled inputs commit and give the browser an opportunity to
+    // paint the new query before corpus construction or matching can occupy
+    // the main thread. A newer query aborts this queued work before it starts.
+    await new Promise<void>(resolve => globalThis.setTimeout(resolve, 0));
+    if (abort.signal.aborted || disposed) return;
+
     const searchRoot = root();
     if (!searchRoot) {
       emit({

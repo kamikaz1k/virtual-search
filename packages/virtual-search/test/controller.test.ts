@@ -26,6 +26,35 @@ afterEach(() => {
 });
 
 describe("createVirtualSearch", () => {
+  it("publishes the query before starting search work", async () => {
+    document.body.innerHTML = `<main><div id="list"></div></main>`;
+    const root = document.querySelector("main")!;
+    const anchor = document.querySelector("#list")!;
+    const getUnits = vi.fn(() => [{
+      key: "row",
+      parts: [{ id: "text", text: "Needle" }],
+    }]);
+    const search = createVirtualSearch({ root });
+    search.registerRegion({
+      id: "list",
+      anchor: () => anchor,
+      getUnits,
+      reveal: () => null,
+    });
+
+    const pending = search.setQuery("needle");
+
+    expect(search.getState()).toMatchObject({
+      query: "needle",
+      status: "searching",
+    });
+    expect(getUnits).not.toHaveBeenCalled();
+
+    await pending;
+
+    expect(getUnits).toHaveBeenCalledOnce();
+  });
+
   it("merges static DOM and multiple virtual regions in document order", async () => {
     document.body.innerHTML = `
       <main id="root">
@@ -547,6 +576,9 @@ describe("createVirtualSearch", () => {
     });
 
     const first = search.setQuery("first");
+    await vi.waitFor(() => {
+      expect(releaseFirst).toBeTypeOf("function");
+    });
     const second = search.setQuery("second");
     releaseFirst();
     await Promise.all([first, second]);
